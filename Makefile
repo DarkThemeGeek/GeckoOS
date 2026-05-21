@@ -1,8 +1,7 @@
 # Makefile to make and run with QEMU. //ember2819
 CC      = clang
 AS      = nasm
-LD      = ld.lld # *should* support all arch on any arch (x86 on arm, x86_64 on arm, etc)
-OBJCOPY = objcopy
+LD      = ld
 
 include_folder = include
 CC_FLAGS = -target x86_64-elf -march=x86-64 -m64 -MMD -MP \

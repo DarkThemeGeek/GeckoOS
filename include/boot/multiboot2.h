@@ -76,6 +76,7 @@ typedef struct multiboot2_tag_mmap {
     uint32_t size;
     uint32_t entry_size;
     uint32_t entry_version;
+    multiboot2_mmap_entry_t entries[];
     /* Followed by (size - 16) / entry_size entries of type multiboot2_mmap_entry_t */
 } __attribute__((packed)) multiboot2_tag_mmap_t;
 
@@ -119,3 +120,7 @@ typedef struct multiboot2_tag_acpi {
  */
 #define MULTIBOOT2_TAG_NEXT(tag) \
     ((multiboot2_tag_t *)(((uintptr_t)(tag) + (tag)->size + 7) & ~UINT32_C(7)))
+
+//only extern variables are global 
+extern uint64_t g_mbi_addr         ;//adress to mbi data struct
+extern uint64_t g_multiboot2_magic ;//adress to magic numbers

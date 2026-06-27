@@ -1,7 +1,10 @@
 #pragma once
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-static void strcpy(char* d, const char* s);
-static bool strcmp(const char* a, const char* b);
-static int strlen(const char* s);
+void strcpy(char *d, const char *s);
+bool strcmp(const char *a, const char *b);
+int strlen(const char *s);
+int memcmp(char *a, char *b, size_t size);
+char *strstr(char *haystack, char *needle);

@@ -4,7 +4,9 @@
 #include <ports.h>
 #include <terminal/terminal.h>
 #include <drivers/tables/irq.h>
-
+#include "drivers/apic/lapic.h"
+#include "drivers/tables/isr.h"
+#include "terminal/printf.h"
 idt_entry_t idt_entries[256];
 idt_ptr_t   idt_ptr;
 
@@ -14,6 +16,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
     idt_entries[num].base_mid = (base >> 16) & 0xFFFF;
     idt_entries[num].base_hi  = (base >> 32) & 0xFFFFFFFF;
 
+    
     idt_entries[num].sel    = sel;
     idt_entries[num].ist    = 0;
     idt_entries[num].flags  = flags;
@@ -26,7 +29,7 @@ void init_idt()
     idt_ptr.base  = (uint64_t)&idt_entries;
 
     memset(&idt_entries, 0, sizeof(idt_entry_t) * 256);
-
+        
     /* Remap PIC: IRQs 0-15 → IDT vectors 32-47 */
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
@@ -52,8 +55,8 @@ void init_idt()
     idt_set_gate(10, (uint64_t)isr10, 0x08, 0x8E);
     idt_set_gate(11, (uint64_t)isr11, 0x08, 0x8E);
     idt_set_gate(12, (uint64_t)isr12, 0x08, 0x8E);
-    idt_set_gate(13, (uint64_t)isr13, 0x08, 0x8E);
-    idt_set_gate(14, (uint64_t)isr14, 0x08, 0x8E);
+    idt_set_gate(13 ,(uint64_t)isr13, 0x08, 0x8E);
+    idt_set_gate(14, (uint64_t)isr14,0x08, 0x8E);
     idt_set_gate(15, (uint64_t)isr15, 0x08, 0x8E);
     idt_set_gate(16, (uint64_t)isr16, 0x08, 0x8E);
     idt_set_gate(17, (uint64_t)isr17, 0x08, 0x8E);
@@ -73,5 +76,6 @@ void init_idt()
     idt_set_gate(31, (uint64_t)isr31, 0x08, 0x8E);
 
     idt_flush((uint64_t)&idt_ptr);
-    STI();
+   
 }
+

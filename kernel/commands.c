@@ -3,7 +3,7 @@
 #include <bootoptions.h>
 #include <colors.h>
 #include <drivers/keyboard.h>
-#include <drivers/tables/timer.h>
+#include <drivers/tables/PIT_timer.h>
 #include <drivers/serial.h>
 #include <layouts/kb_layouts.h>
 #include <terminal/terminal.h>

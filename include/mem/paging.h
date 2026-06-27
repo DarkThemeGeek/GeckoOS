@@ -39,5 +39,5 @@ void          vmm_unmap(page_table_t *pml4, uint64_t virt);
 uint64_t      vmm_get_phys(page_table_t *pml4, uint64_t virt);
 page_table_t *vmm_get_pml4(void);
 bool          vmm_set_pml4(page_table_t *pml4);
-
+int           mmio_unmap(uint64_t virt, uint64_t size);
 uint64_t      mmio_map(uint64_t phys, uint64_t size);

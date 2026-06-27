@@ -55,6 +55,6 @@ void set_layout(KeyboardLayout layout);
 //installs the handler on it s port on pic so we get interupts each time a key is pressed
 void keyboard_install();
 void keyboard_handler(registers_t* r);
-
+void enable_8042_interrupts(void);
 
 #endif

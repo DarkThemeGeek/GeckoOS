@@ -13,7 +13,7 @@ PHDRS
 SECTIONS
 {
     . = PHYS_BASE;
-
+    _kernel_start = .;
     .multiboot2_header : {
         KEEP(*(.multiboot2_header))
     } :text
@@ -46,4 +46,5 @@ SECTIONS
         *(COMMON)
         _bss_end = .;
     } :data
+    _kernel_end = .;
 }

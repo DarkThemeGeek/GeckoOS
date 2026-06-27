@@ -1,13 +1,16 @@
-#include <mem.h>
+#include "mem/paging.h"
 #include <drivers/vga.h>
 #include <gk/gk.h>
-#include <terminal/terminal.h>
+#include <mem.h>
 #include <stdalign.h>
+#include <stdint.h>
+#include <terminal/terminal.h>
 
-void *memcpy(void *dest, const void *src, unsigned long n) {
+void *memcpy(void *dest, const void *src, unsigned long n)
+{
     // n = Number of bytes
 
-    unsigned char *d = dest;
+    unsigned char *d       = dest;
     const unsigned char *s = src;
 
     // Iterate n times, copying the byte in s into the same index in d
@@ -19,7 +22,8 @@ void *memcpy(void *dest, const void *src, unsigned long n) {
 }
 
 // [Ember2819: BEGIN - memset implementation]
-void *memset(void *dest, int val, unsigned long n) {
+void *memset(void *dest, int val, unsigned long n)
+{
     unsigned char *d = (unsigned char *)dest;
     for (unsigned long i = 0; i < n; i++) {
         d[i] = (unsigned char)val;
@@ -29,37 +33,32 @@ void *memset(void *dest, int val, unsigned long n) {
 // [Ember2819: END]
 
 // Pumpkicks
-int strlen(char *ptr) {
-    int i = 0;
-    while (ptr[i])
-        i++;
-    return i;
-}
- 
 // replace with real allocator later but should be fine for now
 // kotofyt: it is not
 extern unsigned char __bss_start;
 extern unsigned char __bss_end;
 
-static void *heap_ptr;
+static void *heap_head;
 
-//no idea where it should end
+// no idea where it should end
 static void *heap_end;
-
-static block *free_list_head;
+// this was a stupid idea
+// static block *free_list_head;
 
 static unsigned long mem_max;
 
-uint64_t kalloc_get_memory_maps_e820() {
+uint64_t kalloc_get_memory_maps_e820()
+{
     // they should be at 0x8000
     // todo: implement this
     return -1;
-}
+}   
 
-void kalloc_init() {
-    heap_ptr = (void *)0x200000;
-    heap_end=(void*)0x500000;
-    free_list_head = NULL;
+void kalloc_init()
+{
+    heap_head = (void *)0x200000;
+    heap_head = (void *)0x500000;
+    mmio_map(0x200000, 0x500000 - 0x200000 + 1);
 }
 
 // void* kmalloc(unsigned long size) {
@@ -67,31 +66,45 @@ void kalloc_init() {
 //	heap_ptr+=size;
 //	return ptr;
 // }
-static block *find_free_block(unsigned long size) {
-    // if heap is empty return the heap_ptr
+static block *find_free_block(size_t size)
+{
+    block *b = heap_head;
 
-    block *p;
-    for (p = free_list_head; p; p = p->next) {
-        if (p->free && p->size >= size)
-            return p;
+    while (b) {
+        if (b->free && b->size >= size)
+            return b;
+
+        b = b->next;
     }
+
     return NULL;
 }
 // suposed to create the blocks if they do not exist
 //
-static block *create_block(unsigned long size) {
+static block *last_block = NULL;
 
-     if ((unsigned char*)heap_ptr + sizeof(block) + size > (unsigned char*)heap_end)
-         return NULL;
-    block *b = (block *)heap_ptr;
+static block *create_block(size_t size)
+{
+    block *b = (block *)heap_head;
+
     b->size = size;
     b->free = 0;
     b->next = NULL;
-    heap_ptr += ALIGN8(sizeof(block) + size);
+
+    if (last_block)
+        last_block->next = b;
+    else
+        heap_head = b;
+
+    last_block = b;
+
+    heap_head += ALIGN8(sizeof(block) + size);
+
     return b;
 }
 // tehnically we should not occupy more than needed
-static void split_block(block *b, unsigned long size) {
+static void split_block(block *b, unsigned long size)
+{
     if (b->size <= size + sizeof(block))
         return;
     // only get what we need
@@ -107,7 +120,8 @@ static void split_block(block *b, unsigned long size) {
 // allocates memory on the heap(i hope idk where the pointer above leads)
 // using blocks(struct size,free,next) of memory
 // i am going to trust that nobody passes size 0
-void *kmalloc(unsigned long size) {
+void *kmalloc(unsigned long size)
+{
 
     size = ALIGN8(size);
 
@@ -130,7 +144,8 @@ void *kmalloc(unsigned long size) {
     return (void *)(b + 1);
 }
 // frees the block allocated at ptr by seeting the free = 1
-void kfree(void *ptr) {
+void kfree(void *ptr)
+{
 
     if (!ptr)
         return;
@@ -138,16 +153,12 @@ void kfree(void *ptr) {
     block *b = (block *)ptr - 1;
 
     b->free = 1;
-
-    b->next = free_list_head;
-
-    free_list_head = b;
 }
 // combinging blocks idk when i should combine them so it doesn t do that much
 // lag
-void combine_blocks() {
-    block *b = free_list_head;
-
+void combine_blocks()
+{
+    block *b = heap_head;
     while (b && b->next) {
         unsigned char *end = (unsigned char *)(b + 1) + b->size;
 

@@ -139,3 +139,19 @@ uint64_t mmio_map(uint64_t phys, uint64_t size)
 
     return virt_base + offset;
 }
+int mmio_unmap(uint64_t virt, uint64_t size)
+{
+    page_table_t *pml4 = vmm_get_pml4();
+    if (!pml4) return -1;
+    
+    uint64_t virt_aligned = virt & ~(PAGE_SIZE - 1);
+    uint64_t offset = virt - virt_aligned;
+    uint64_t pages = (size + offset + PAGE_SIZE - 1) / PAGE_SIZE;
+    
+    for (uint64_t i = 0; i < pages; i++) {
+        // Unmap the page (set entry to 0)
+        vmm_unmap(pml4, virt_aligned + i * PAGE_SIZE) ;
+    }
+    
+    return 0;
+}

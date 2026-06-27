@@ -8,12 +8,17 @@ struct idt_entry_struct
 {
     uint16_t base_lo;
     uint16_t sel;
+
     uint8_t  ist;       /* Interrupt Stack Table index (0 = legacy stack) */
     uint8_t  flags;
+
     uint16_t base_mid;
     uint32_t base_hi;
+
     uint32_t zero;      /* reserved */
 } __attribute__((packed));
+
+
 typedef struct idt_entry_struct idt_entry_t;
 
 struct idt_ptr_struct

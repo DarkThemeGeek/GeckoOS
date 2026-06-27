@@ -2,6 +2,8 @@
 CC      = clang
 AS      = nasm
 LD      = ld
+QEMU = qemu-system-x86_64
+GDB  = gdb
 
 include_folder = include
 CC_FLAGS = -target x86_64-elf -march=x86-64 -m64 -MMD -MP \
@@ -47,7 +49,7 @@ grub-iso: kernel.elf grub-modules/i386-pc/modinfo.sh
 	cp kernel.elf         $(ISODIR)/boot/kernel.elf
 	cp boot/grub/grub.cfg $(ISODIR)/boot/grub/grub.cfg
 	grub-mkrescue --directory=grub-modules/i386-pc -o gecko.iso $(ISODIR) --locale-directory=/usr/share/locale
-	@echo "gecko.iso built. Boot with:  make run-grub"
+	@echo "gecko.iso built. Boot with:  make run-fat32"
 
 run-grub: gecko.iso
 	qemu-system-x86_64 -cdrom gecko.iso -boot order=d \
@@ -60,15 +62,29 @@ fat32.img:
 	@echo "fat32.img created."
 
 run-fat32: gecko.iso fat32.img
-	qemu-system-x86_64 \
+	$(QEMU) \
 	  -cdrom gecko.iso \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 \
-	  -device e1000,netdev=net0
+	  -device e1000,netdev=net0 \
+	  -s \
+	
 clean:
 	rm -f $(OBJECTS) $(DEPS)
 	rm -f kernel.elf gecko.iso fat32.img
 	rm -rf $(ISODIR)
 
+debug-kernel: gecko.iso fat32.img kernel.elf
+	$(QEMU) \
+		-cdrom gecko.iso \
+		-drive format=raw,file=fat32.img \
+		-boot order=d \
+		-netdev user,id=net0 \
+		-device e1000,netdev=net0 \
+		-s -S \
+		-monitor stdio \
+		-d int
+debug-gdb:
+	gdb kernel.elf -x gdbinit
 .PHONY: all grub-iso run-grub fat32.img run-fat32 clean

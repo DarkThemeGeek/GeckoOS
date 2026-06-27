@@ -1,3 +1,4 @@
+#include "colors.h"
 #include "terminal/printf.h"
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
@@ -9,7 +10,7 @@
 #include <terminal/terminal.h>
 
 uint16_t terminal_column = 0; // the column the terminal is at for writing
-uint16_t terminal_row    = 0; // the row the terminal is at for writing
+uint16_t terminal_row    = 0; // the row the terminal is looking at
 static int history_count = 0;
 static int history_head  = 0;
 
@@ -196,7 +197,7 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
 {
     size_t buff_count = 0; // Initialise the buffer count
     size_t start_x    = terminal_column;
-    size_t start_y    = terminal_row;
+    size_t start_y    = total_lines;
 
     // Ember2891: history
     int browse_idx = 0;
@@ -207,10 +208,6 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
         // Wait for scancode
         scancode_t sc = ps2_kb_wfi();
 
-        if (sc & 0x80)
-            continue;
-        if (sc == 0)
-            continue;
 
         // If up or down arrow is pressed
         if (sc == KEY_UP || sc == KEY_DOWN) {
@@ -242,11 +239,12 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
                 src = history_entries[slot];
             }
 
-            // Clear the line in the framebuffer
+            //Clear the line in the framebuffer
             for (size_t k = 0; k < terminal_column - start_x; k++) {
                 size_t col = (start_x + k) % VGA_TEXT_WIDTH;
                 size_t row = start_y + (start_x + k) / VGA_TEXT_WIDTH;
                 putentryat(' ', color, col, row);
+                console_history[terminal_row][terminal_column]=vga_entry_color(' ', color);
             }
 
             // Reset software and hardware cursor back to start of input.
@@ -277,11 +275,13 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
             if (buff_count > 0) {
                 if (terminal_column > 0) {
                     terminal_column--;
+                    
                 } else if (terminal_row > 0) {
                     terminal_row = VGA_TEXT_WIDTH - 1;
                     terminal_row--;
+                   
                 }
-
+                console_history[total_lines][terminal_column]=vga_entry(' ', TERM_COLOR);
                 putentryat(' ', color, terminal_column, terminal_row);
                 buff_count--;
                 buff[buff_count] = 0;
@@ -303,7 +303,7 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
 
     // Null terminate the buffer
     buff[buff_count] = '\0';
-
+    render_viewport();
     // Ember2819: arrow recall
     history_push(buff);
 }

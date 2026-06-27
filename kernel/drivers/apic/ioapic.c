@@ -70,8 +70,8 @@ void ioapic_init()
     }
 
     uint32_t current_id = (ioapic_read(IOAPIC_REG_ID) >> 24) & 0xF;
-    printf("IOAPIC: current ID=%u\n", current_id);
-    printf("IOapci and lapic base:%x",ioapic_virt);
+    //printf("IOAPIC: current ID=%u\n", current_id);
+    //printf("IOapci and lapic base:%x",ioapic_virt);
 }
 
 void ioapic_redirect_irq(int gsi, int vector, uint16_t flags)

@@ -97,9 +97,10 @@ __attribute__((section(".text.entry"))) void _entry(uint64_t magic,
     pci_detect_nics();
 
     // network init//
-
+    lapic_start_cores();
     net_init();
     arp_init();
+    
      printc("Testing interruption...\n", VGA_COLOR_LIGHT_GREY);
     asm volatile("int $0x3");
     printc("Test completed!\n", VGA_COLOR_LIGHT_GREY);

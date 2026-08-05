@@ -163,6 +163,11 @@ void initialize_memory_manager_from_mbi(uint64_t mbi_addr)
     // Reserve the first block (BIOS/Legacy)
     set_block(0);
     used_blocks++;
+
+    //for lapic vectors
+    #define AP_TRAMPOLINE_ADDR 0x8000
+    #define AP_TRAMPOLINE_SIZE 0x1000 //4kb
+    reserve_region(AP_TRAMPOLINE_ADDR, AP_TRAMPOLINE_SIZE);
 }
 
 void deinitialize_memory_region(uint64_t base_address, uint64_t size)

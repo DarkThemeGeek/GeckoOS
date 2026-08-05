@@ -63,13 +63,14 @@ fat32.img:
 
 run-fat32: gecko.iso fat32.img
 	$(QEMU) \
+	  -smp 2 \
 	  -cdrom gecko.iso \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 \
 	  -device e1000,netdev=net0 \
 	  -s \
-	
+	  -monitor stdio
 clean:
 	rm -f $(OBJECTS) $(DEPS)
 	rm -f kernel.elf gecko.iso fat32.img

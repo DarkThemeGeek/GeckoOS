@@ -27,6 +27,10 @@
 // LVT flags
 #define LAPIC_LVT_MASKED         (1 << 16) // Interrupt masked
 #define LAPIC_LVT_TIMER_PERIODIC (1 << 17) // Periodic timer mode
+
+#define lAPIC_ICR_LOW_DEST_OFFSET		18
+#define LAPIC_IPI_LOW 0x000C4500;//low 32bits for initializing cores 
+
 void cpu_set_apic_base(uint64_t apic);
 uint64_t cpu_get_apic_base(void);
 
@@ -38,6 +42,7 @@ bool cpu_has_x2apic();
 volatile uint32_t *get_lapic_base();
 // Initializing the local apic
 int lapic_init();
+void lapic_start_cores();
 
 uint32_t lapic_get_id(void);
 void lapic_write(uint32_t reg, uint32_t value);

@@ -1,5 +1,0 @@
-CompileFlags:
-  Add: [-Wall, -Wextra, -m64, -march=x86-64, -mno-red-zone, -mcmodel=kernel, -ffreestanding, -nostdlib, -xc]
-
-Diagnostics:
-  UnusedIncludes: None

@@ -1,6 +1,8 @@
 // Pumpkicks
 
-#include <terminal/terminal.h> // for printf
+#include <stdint.h>
+#include <terminal/printf.h> // for printf
+#include <terminal/terminal.h>
 #include <drivers/tables/isr.h>
 #include <colors.h>
 #include <drivers/tables/irq.h>
@@ -10,15 +12,7 @@ int actual_hz = 50; // Set to 50 as the default
 
 void timer_handler(registers_t* r)
 {
-    /* Increment our 'tick count' */
     timer_ticks++;
-
-/*     Every 18 clocks (approximately 1 second), we will
-       display a message on the screen
-    if (timer_ticks % 18 == 0)
-    {
-        print("One second has passed\n");
-    } */
 }
 void timer_phase(int hz)
 {

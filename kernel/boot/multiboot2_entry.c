@@ -59,6 +59,4 @@ void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
     }
 
     _entry();
-
-    for (;;) { __asm__ volatile ("cli; hlt"); }
 }

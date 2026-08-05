@@ -1,4 +1,7 @@
 #include "drivers/mouse.h"
+#include "drivers/tables/isr.h"
+#include "drivers/tables/tss.h"
+#include "mem.h"
 #include <drivers/tables/idt.h>
 #include <drivers/tables/irq.h>
 #include <drivers/tables/timer.h>
@@ -16,6 +19,11 @@
 #include <mem/paging.h>
 #include <net/net.h>
 #include <net/arp.h>
+#include <terminal/printf.h>
+#include "fs/fs.h"
+#include "ports.h"
+#include <exe.h>
+#include <drivers/tables/gdt.h>
 
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
@@ -26,7 +34,6 @@ static void kmain();
 __attribute__((section(".text.entry")))
 void _entry() {
     serial_init();
-
     kalloc_init();
 
     /*
@@ -48,7 +55,6 @@ void _entry() {
     printc("Booted via GRUB/Multiboot2.\n", TERM_COLOR);
 
     set_layout(LAYOUTS[0]);
-
     printc("Enabling IDT...\n", VGA_COLOR_LIGHT_GREY);
     init_idt();
     printc("Enabling IRQ...\n", VGA_COLOR_LIGHT_GREY);
@@ -60,15 +66,12 @@ void _entry() {
     terminal_init();
     timer_phase(50);
 
-    printc("Testing interruption...\n", VGA_COLOR_LIGHT_GREY);
-    asm volatile("int $0x3");
-    printc("Test completed!\n", VGA_COLOR_LIGHT_GREY);
-
     printc("Enabling paging...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
         printc("vmm_init failed -- halting\n", VGA_COLOR_RED);
         for (;;) asm volatile("hlt");
     }
+    register_interrupt_handler(INT_PAGEFAULT, page_fault);
 
     drives_init();
     enumerate_pci();
@@ -83,8 +86,7 @@ void _entry() {
 static void kmain() {
     get_kdrive(0);
 
-    unsigned char mount_cmd[] = "fsmount";
-    run_command(mount_cmd, TERM_COLOR);
+    run_command("fsmount", TERM_COLOR);
     printc("\n", TERM_COLOR);
 
     while (1) {

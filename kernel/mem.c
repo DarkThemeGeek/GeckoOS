@@ -58,8 +58,6 @@ static void *heap_end;
 
 static block *free_list_head;
 
-static unsigned long mem_max;
-
 uint64_t kalloc_get_memory_maps_e820() {
     // they should be at 0x8000
     // todo: implement this

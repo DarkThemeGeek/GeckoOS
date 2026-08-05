@@ -1,7 +1,7 @@
 # Makefile to make and run with QEMU. //ember2819
 CC      = clang
 AS      = nasm
-LD      = ld.lld # *should* support all arch on any arch (x86 on arm, x86_64 on arm, etc)
+LD      = ld # *should* support all arch on any arch (x86 on arm, x86_64 on arm, etc)
 OBJCOPY = objcopy
 
 include_folder = include
@@ -60,16 +60,21 @@ fat32.img:
 	mkfs.fat -F 32 -n "GECKOOS" fat32.img
 	@echo "fat32.img created."
 
-run-fat32: gecko.iso fat32.img
+Elffile:
+	$(MAKE) -C Assets/Elf\ for\ testing
+	mv Assets/Elf\ for\ testing/Elf .
+
+run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	qemu-system-x86_64 \
 	  -cdrom gecko.iso \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 \
-	  -device e1000,netdev=net0
+	  -device e1000,netdev=net0 \
+	  -monitor stdio # -d int,pcall
 clean:
 	rm -f $(OBJECTS) $(DEPS)
-	rm -f kernel.elf gecko.iso fat32.img
+	rm -f kernel.elf gecko.iso
 	rm -rf $(ISODIR)
 
 .PHONY: all grub-iso run-grub fat32.img run-fat32 clean

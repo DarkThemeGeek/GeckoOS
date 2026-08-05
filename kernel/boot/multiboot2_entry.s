@@ -71,7 +71,7 @@ gdt64_tss:
     dq 0
     dq 0
 gdt64_end:
-    dq 0
+
 gdt64_ptr:
     dw gdt64_end - gdt64_start - 1
     dq gdt64_start          ; 64-bit base

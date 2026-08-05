@@ -23,7 +23,6 @@
 #include "fs/fs.h"
 #include "ports.h"
 #include <exe.h>
-#include <drivers/tables/gdt.h>
 
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);

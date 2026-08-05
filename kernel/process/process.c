@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <drivers/tables/isr.h>
 #include <drivers/vga.h>
+#include <terminal/printf.h>
 
 #define MAX_PROCESSES 16
 
@@ -85,7 +86,7 @@ uint32_t create_process(void *entry_point)
     /* Map a 4 KB user stack above the program buffer */
     uint64_t stack_virt = main_thread->pgm_buf + main_thread->pgm_size + PAGE_SIZE;
     void *phys = allocate_blocks(1);
-    vmm_map(pml4, (uint64_t)phys, stack_virt, PTE_PRESENT | PTE_WRITABLE | PTE_USER);
+    vmm_map(pml4, (uint64_t)phys, stack_virt, PTE_PRESENT | PTE_WRITABLE);
 
     main_thread->regs.rsp = stack_virt;
 
@@ -101,7 +102,6 @@ static void execute_process(Process *proc)
 
     uint64_t entry_point = proc->threads[0].regs.rip;
     uint64_t proc_stack  = proc->threads[0].regs.rsp;
-
     vmm_set_pml4(proc->pml4);
 
     __asm__ __volatile__(

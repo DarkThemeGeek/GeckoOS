@@ -5,7 +5,7 @@
 #include <drivers/keyboard.h>
 #include <layouts/kb_layouts.h>
 #include <ports.h>
-#include <terminal/terminal.h>
+#include <terminal/printf.h>
 #include <drivers/tables/irq.h>
 #include <drivers/vga.h>
 
@@ -63,6 +63,8 @@ scancode_t ps2_kb_wfi() {
     //sets the current scancode the last scancode
     scancode = last_scancode;
     
+    process_keypress(scancode);
+
     // Ember2819: arrow key history
     if (scancode == 0xE0) {
         while (!(inb(KEYBOARD_STATUS_PORT) & 1)) {
@@ -77,8 +79,6 @@ scancode_t ps2_kb_wfi() {
         if (ext == 0x4D) return KEY_RIGHT;
         return 0;
     }
-
-    process_keypress(scancode);
 
     return scancode;
 }

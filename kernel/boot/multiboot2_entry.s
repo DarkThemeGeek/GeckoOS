@@ -63,29 +63,42 @@ gdt64_code:
     dq 0x00AF9A000000FFFF   ; 64-bit code: L=1, P=1, DPL=0
 gdt64_data:
     dq 0x00CF92000000FFFF   ; 64-bit data: P=1, DPL=0
+gdt64_user_data:
+    dq 0x00CF92000000FFFF
+gdt64_user_code:
+    dq 0x3FFFC000007D7D00
+gdt64_tss:
+    dq 0
+    dq 0
 gdt64_end:
 
 gdt64_ptr:
     dw gdt64_end - gdt64_start - 1
     dq gdt64_start          ; 64-bit base
 
+magic:
+    dd 0
+mbi:
+    dd 0
+
 section .text.multiboot2_entry
 global multiboot2_entry
+global gdt64_tss
 extern multiboot2_main
+extern global_tss
 
 multiboot2_entry:
-    mov edi, eax
-    mov esi, ebx
-
     mov ebp, eax
 
     mov esp, early_stack_top
+
+    mov [magic], eax
+    mov [mbi], ebx
 
     mov edi, pml4_table
     mov ecx, 4096
     xor eax, eax
     rep stosd
-    mov edi, ebp            ; restore edi = magic
 
     mov ebx, pml4_table
     mov ecx, (4 * 4096) / 4
@@ -164,6 +177,7 @@ multiboot2_entry:
     mov cr0, eax
 
     lgdt [gdt64_ptr]
+
     jmp 0x08:long_mode_entry
 
 bits 64
@@ -175,6 +189,57 @@ long_mode_entry:
     mov gs, ax
     mov ss, ax
 
+    mov rsp, kernel_stack_top
+
+    ; Setting the tss entry in the gdt, asked chatgpt some questions about this (I'm not that good with pure ASM)
+
+    ; Putting the limit
+    mov rax, 103
+    mov byte [gdt64_tss], al
+    shr rax, 8
+    mov byte [gdt64_tss + 1], al
+    mov rax, 103
+    shr rax, 16
+    mov byte [gdt64_tss + 6], al
+
+    ; Putting the base
+    mov rax, global_tss
+    mov byte [gdt64_tss + 2], al
+    shr eax, 8
+    mov byte [gdt64_tss + 3], al
+    mov rax, global_tss
+    shr eax, 16
+    mov byte [gdt64_tss + 4], al
+    mov rax, global_tss
+    shr eax, 24
+    mov byte [gdt64_tss + 7], al
+    mov rax, global_tss
+    shr rax, 32
+    mov dword [gdt64_tss + 8], eax
+    mov dword [gdt64_tss + 12], 0
+
+    push rdi
+    mov edi, gdt64_tss + 8
+    mov ecx, 2
+    xor eax, eax
+    rep stosd
+    pop rdi
+
+    ; Putting access byte
+    mov byte [gdt64_tss + 5], 0x89
+
+    ; Putting flag
+    mov rax, 0x0
+    or byte [gdt64_tss + 6], al
+
+    ; Enabling TSS
+    mov rax, kernel_stack_top
+    mov [global_tss + 4], rax
+    mov ax, 104
+    mov word [global_tss + 102], ax
+    mov ax, 0x0028
+    ltr ax
+
     mov rax, cr4
     or  rax, (1 << 9) | (1 << 10)
     mov cr4, rax
@@ -184,14 +249,12 @@ long_mode_entry:
     or  rax, (1 << 1)
     mov cr0, rax
 
-    mov rsp, kernel_stack_top
-
     push 0
     popfq
 
     ; RDI = magic, RSI = mbi_addr
-    mov edi, edi      ; zero‑extends EDI into RDI
-    mov esi, esi  
+    mov edi, [magic]
+    mov esi, [mbi]
 
     call multiboot2_main
 

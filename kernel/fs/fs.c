@@ -1,3 +1,5 @@
+#include "mem.h"
+#include "terminal/terminal.h"
 #include <fs/fat32.h>
 #include <fs/fs.h>
 
@@ -28,4 +30,42 @@ struct drive_fs_t *fs_partition_open( struct kdrive_t *drive, struct partition_t
 void fs_free_entries( struct fs_entries_t *entries )
 {
 	/* we do not have free lol, let that sink in */
+}
+
+extern struct drive_fs_t *fs;
+Buffer_t readfile(unsigned char* fname) {
+    struct fs_entries_t entries;
+    int i, found;
+
+    entries = fs->get_entries((void*)fs);
+    found = -1;
+    for (i = 0; i < (int)entries.count; i++) {
+        if (entries.entries[i].type != ENTRY_FILE) continue;
+        const char *a = entries.entries[i].file.name;
+        const unsigned char *b = fname;
+        int match = 1;
+        while (*a && *b) {
+            char ca = (*a >= 'a' && *a <= 'z') ? *a - 32 : *a;
+            char cb = (*b >= 'a' && *b <= 'z') ? *b - 32 : *b;
+            if (ca != cb) { match = 0; break; }
+            a++; b++;
+        }
+        if (match && *a == '\0' && *b == '\0') { found = i; break; }
+    }
+    if (found == -1) {
+        return (Buffer_t){NULL, 0};
+    }
+
+    uint8_t readbuf[128];
+    int bytes, j = 0, o = 0;
+	uint8_t* buffer = kmalloc(entries.entries[found].file.file_size); // HARDCODED (20kb)
+    while ((bytes = entries.entries[found].file.read(
+            (void*)&entries.entries[found].file, j * 128, 128, readbuf)) > 0) {
+        j++;
+        for (int k = 0; k < bytes; k++) {
+            buffer[o] = readbuf[k];
+            o++;
+        }
+    }
+    return (Buffer_t){buffer, entries.entries[found].file.file_size};
 }

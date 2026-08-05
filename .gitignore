@@ -8,3 +8,4 @@
 .vscode
 grub-modules/i386-pc
 build/
+Elf

@@ -1,3 +1,5 @@
+#include "exe.h"
+#include "process/process.h"
 #include "terminal/printf.h"
 #include <commands.h>
 #include <bootoptions.h>
@@ -33,7 +35,7 @@ static Command commands[] = {
     { "meminfo",      cmd_meminfo      },
     { "lspci",        cmd_lspci        },
     // --- keyboard ---
-    { "setkeyswe",    cmd_setkeyswe    },
+    { "setkeyswe",    cmd_setkeyswe     },
     { "setkeyus",     cmd_setkeyus     },
     { "setkeyuk",     cmd_setkeyuk     },
     // --- timer / power ---
@@ -54,13 +56,17 @@ static Command commands[] = {
     { "mkdir",        cmd_mkdir        },
     { "echo",         cmd_echo         },
     { "write",        cmd_write        },
+    { "dumpelf",      cmd_dumpelf      },
+    { "runelf",       cmd_runelf       },
     // --- network ---
     { "ping",         cmd_ping         },
+    // --- proccess ---
+    { "processes",    cmd_processes    },
 };
 
 static int num_commands = sizeof(commands) / sizeof(commands[0]);
 
-static struct drive_fs_t *fs;
+struct drive_fs_t *fs;
 
 static const char* help_lines[] = {
     "--- System ---",
@@ -100,6 +106,8 @@ static const char* help_lines[] = {
     "mkdir       - Create a new directory",
     "echo        - Print text to screen",
     "write       - Append text to an existing file",
+    "dumpelf     - Dumps an ELF file",
+    "runelf      - Runs an ELF file",
     "",
     "--- Network ---",
     "ping <ip>   - Ping an IP address (e.g. ping 10.0.2.2)",
@@ -750,6 +758,37 @@ static void cmd_ping(uint8_t color) {
     printc(", Lost: ", color);
     print_int(sent - received);
     printc("\n", color);
+}
+static void cmd_dumpelf(uint8_t color) {
+    unsigned char filename[32];
+
+    printf("\nEnter the filename: ");
+    input(filename, 32, color);
+
+    Buffer_t file = readfile(filename);
+
+    printf("\n");
+    dumpelf(file.bytes, file.size);
+
+    kfree(file.bytes);
+}
+
+static void cmd_runelf(uint8_t color) {
+    unsigned char filename[32];
+
+    printf("\nEnter the filename: ");
+    input(filename, 32, color);
+
+    Buffer_t file = readfile(filename);
+
+    printf("\n");
+    runelf(file);
+
+    kfree(file.bytes);
+}
+
+static void cmd_processes(uint8_t color) {
+    printf("\nProcesses count: %d\n", nr_processes);
 }
 
 static int streq(unsigned char *a, char *b) {

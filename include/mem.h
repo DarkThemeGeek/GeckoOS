@@ -4,6 +4,8 @@
 #ifndef _MEM_H
 #define _MEM_H
 //idk but they say aligning is important
+#include <stddef.h>
+#include <stdint.h>
 #define ALIGN8(x) (((x) + 7) & ~7)
 //this is block of memory
 typedef struct block block ;
@@ -31,7 +33,6 @@ void* kmalloc(unsigned long size);
 void kfree(void* p);
 void combine_blocks();
 //Pumpkicks
-extern unsigned long memend; // The memory size from the 0x1000
 int strlen(char* ptr);
 
 // these are defined in <stddef.h>
@@ -39,5 +40,12 @@ int strlen(char* ptr);
 typedef unsigned int size_t;
 typedef int ssize_t;
 */
+
+typedef struct Buffer {
+    unsigned char* bytes;
+    size_t size;
+} Buffer_t;
+
+#define assert(x) if(!x){printf("%s: assertion failed (%s)\n", __func__, #x); for(;;);}
 
 #endif

@@ -1,3 +1,6 @@
+#include "drivers/tables/isr.h"
+#include "terminal/terminal.h"
+#include "terminal/printf.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -10,7 +13,7 @@ static page_table_t *current_pml4 = NULL;
 #define MMIO_VIRT_BASE 0xFFFFFFFF90000000ULL
 static uint64_t mmio_virt_next = MMIO_VIRT_BASE;
 
-static page_table_t *alloc_table(void)
+page_table_t *alloc_table(void)
 {
     page_table_t *t = (page_table_t *)allocate_blocks(1);
     if (t) memset(t, 0, sizeof(page_table_t));
@@ -61,9 +64,9 @@ page_table_t *vmm_get_pml4(void)
 
 bool vmm_set_pml4(page_table_t *pml4)
 {
-    if (!pml4) return false;
+    assert(pml4 != NULL);
     current_pml4 = pml4;
-    __asm__ volatile("mov %0, %%cr3" : : "r"((uint64_t)pml4) : "memory");
+    asm volatile("mov %0, %%cr3" : : "r"((uint64_t)pml4) : "memory");
     return true;
 }
 
@@ -149,3 +152,28 @@ uint64_t mmio_map(uint64_t phys, uint64_t size)
 
     return virt_base + offset;
 }
+
+// Panic (Page fault)
+
+void page_fault(registers_t* regs) {
+    uint64_t faulting_address;
+    asm volatile("movq %%cr2, %0" : "=r" (faulting_address));
+
+    int present   = !(regs->err_code & 0x1); // Page not present
+    int rw = regs->err_code & 0x2;           // Write operation?
+    int us = regs->err_code & 0x4;           // Processor was in user-mode?
+    int reserved = regs->err_code & 0x8;     // Overwritten CPU-reserved bits of page entry?
+    int id = regs->err_code & 0x10;          // Caused by an instruction fetch?
+    ((void)id);
+
+    print("Page fault! ( ");
+    if (present) {print("present ");}
+    if (rw) {print("read-only ");}
+    if (us) {print("user-mode ");}
+    if (reserved) {print("reserved ");}
+    print(") at 0x");
+    print_hex(faulting_address);
+    print("\n");
+    print("Halting...");
+    for (;;) asm("hlt");
+} 

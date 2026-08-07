@@ -64,7 +64,7 @@ void _entry() {
     printc("Enabling Timer (50Hz)...\n", VGA_COLOR_LIGHT_GREY);
     timer_install();
     keyboard_install();
-    // mouse_init(); // This takes a long time in real machines
+    // mouse_init(); // This takes a long time in real machines, And i think this is useless unless you want to scroll
     terminal_init();
     timer_phase(50);
 

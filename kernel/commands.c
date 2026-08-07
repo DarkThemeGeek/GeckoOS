@@ -794,8 +794,8 @@ static void cmd_processes(uint8_t color) {
 }
 
 static void cmd_showrsdt(uint8_t color) {
-    // parse_rsdt_entries();
-    dumprsdp();
+    printf("\n");
+    parse_rsdt_entries();
 }
 
 static int streq(unsigned char *a, char *b) {

@@ -16,7 +16,7 @@ static uint64_t mmio_virt_next = MMIO_VIRT_BASE;
 page_table_t *alloc_table(void)
 {
     page_table_t *t = (page_table_t *)allocate_blocks(1);
-    if (t) memset(t, 0, sizeof(page_table_t));
+    if (t) memset(t, 0, sizeof(page_table_t)); // TODO: use rep stosd
     return t;
 }
 

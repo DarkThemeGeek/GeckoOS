@@ -24,3 +24,5 @@ void dumprsdp();
 void rsdp_init();
 _Bool check_rsdp();
 struct SDT_header* get_rsdt();
+
+extern struct RSDP_Rev1_t* rsdp;

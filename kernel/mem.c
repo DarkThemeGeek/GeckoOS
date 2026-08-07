@@ -13,7 +13,7 @@ void *memcpy(void *dest, const void *src, unsigned long n) {
     return dest;
 }
 
-void *memmove(void *dest, const void *src, unsigned long n) {
+void *memmove(void *dest, const void *src, unsigned long n) { // USE rep movsb
     unsigned char *d = dest;
     const unsigned char *s = src;
     if (d < s) {
@@ -30,11 +30,7 @@ void *memmove(void *dest, const void *src, unsigned long n) {
 
 // [Ember2819: BEGIN - memset implementation]
 void *memset(void *dest, int val, unsigned long n) {
-    unsigned char *d = (unsigned char *)dest;
-    for (unsigned long i = 0; i < n; i++) {
-        d[i] = (unsigned char)val;
-    }
-    return dest;
+    asm volatile("rep stosb" : : "D"(dest), "c"(n), "a"(val));
 }
 // [Ember2819: END]
 
@@ -58,11 +54,11 @@ static void *heap_end;
 
 static block *free_list_head;
 
-uint64_t kalloc_get_memory_maps_e820() {
+/* uint64_t kalloc_get_memory_maps_e820() {
     // they should be at 0x8000
     // todo: implement this
     return -1;
-}
+} */
 
 void kalloc_init() {
     heap_ptr = (void *)0x200000;

@@ -63,14 +63,9 @@ void _entry() {
     printc("Enabling Timer (50Hz)...\n", VGA_COLOR_LIGHT_GREY);
     timer_install();
     keyboard_install();
-    mouse_init();
+    // mouse_init(); // This takes a long time in real machines
     terminal_init();
     timer_phase(50);
-
-    rsdp_init();
-    rsdt_init();
-    printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
-    parse_rsdt_entries();
 
     printc("Enabling paging (Already activated from boot)...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
@@ -78,6 +73,13 @@ void _entry() {
         for (;;) asm volatile("hlt");
     }
     register_interrupt_handler(INT_PAGEFAULT, page_fault);
+
+    rsdp_init();
+    rsdt_init();
+    
+    initialize_memory_region((uint64_t)rsdp, 250000);
+    printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
+    // parse_rsdt_entries(); // This cause a pagefault in systems with more than 1GB of ram, even if the vmm isn't enabled (The paging is enable since boot)
 
     drives_init();
     enumerate_pci();

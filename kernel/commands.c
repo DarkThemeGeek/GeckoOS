@@ -1,5 +1,5 @@
+#include "drivers/acpi/entries.h"
 #include "drivers/acpi/rsdp.h"
-#include "drivers/acpi/rsdt.h"
 #include "exe.h"
 #include "process/process.h"
 #include "terminal/printf.h"
@@ -799,7 +799,8 @@ static void cmd_showrsdt(uint8_t color) {
     #else
         printf("\n");
     #endif
-    parse_rsdt_entries();
+    dumptable();
+    parse_entries();
 }
 
 static int streq(unsigned char *a, char *b) {

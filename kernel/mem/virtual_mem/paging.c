@@ -1,6 +1,7 @@
+#include "drivers/acpi/entries.h"
 #include "drivers/acpi/rsdp.h"
-#include "drivers/acpi/rsdt.h"
 #include "drivers/tables/isr.h"
+#include "drivers/vga.h"
 #include "terminal/terminal.h"
 #include "terminal/printf.h"
 #include <stdint.h>
@@ -108,9 +109,9 @@ bool vmm_init(void)
 
     // the acpi
     for (uint64_t phys = 0; phys < 0xF000; phys += PAGE_SIZE) {
-        if (!vmm_map(pml4, (uint64_t)rsdt + phys, (uint64_t)rsdt + phys, PTE_PRESENT | PTE_WRITABLE))
+        if (!vmm_map(pml4, (uint64_t)entries + phys, (uint64_t)entries + phys, PTE_PRESENT | PTE_WRITABLE))
             return false;
-    }
+    } printc("ACPI mapped...\n", VGA_COLOR_DARK_GREY);
 
     extern uint64_t g_fb_addr;
     extern uint32_t g_fb_height;
@@ -181,6 +182,5 @@ void page_fault(registers_t* regs) {
     if (reserved) {print("reserved ");}
     print(") at ");
     printf("0x%016p\nHalting...", faulting_address);
-    print("Halting...");
     for (;;) asm("hlt");
 } 

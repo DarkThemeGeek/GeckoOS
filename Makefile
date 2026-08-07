@@ -47,7 +47,7 @@ grub-iso: kernel.elf grub-modules/i386-pc/modinfo.sh
 	@mkdir -p $(ISODIR)/boot/grub
 	cp kernel.elf         $(ISODIR)/boot/kernel.elf
 	cp boot/grub/grub.cfg $(ISODIR)/boot/grub/grub.cfg
-	grub-mkrescue --directory=grub-modules/i386-pc -o gecko.iso $(ISODIR) --locale-directory=/usr/share/locale
+	grub-mkrescue -o gecko.iso $(ISODIR) --locale-directory=/usr/share/locale
 	@echo "gecko.iso built. Boot with:  make run-grub"
 
 run-grub: gecko.iso
@@ -69,7 +69,7 @@ run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	  -cdrom gecko.iso \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
-	  -netdev user,id=net0 -m 8G \
+	  -netdev user,id=net0 \
 	  -device e1000,netdev=net0 -machine acpi=on \
 	  -monitor stdio # -smp 4 # -d int,pcall
 clean:

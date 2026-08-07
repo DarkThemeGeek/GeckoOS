@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-struct RSDP_Rev1_t {
+struct Table_Rev1_t {
     char Signature[8];
     uint8_t Checksum;
     char OEMID[6];
@@ -10,8 +10,8 @@ struct RSDP_Rev1_t {
     uint32_t RsdtAddress; // Deprecated in version 2.0
 } __attribute__ ((packed));
 
-struct XSDP_Rev2_t {
-    struct RSDP_Rev1_t header;
+struct Table_Rev2_t {
+    struct Table_Rev1_t header;
     uint32_t Length;
     uint64_t XsdtAddress;
     uint8_t ExtendedChecksum;
@@ -20,8 +20,7 @@ struct XSDP_Rev2_t {
 
 #define RSDP_MAGIC "RSD PTR "
 
-void dumprsdp();
-void rsdp_init();
-struct SDT_header* get_rsdt();
+void dumptable();
+void table_init();
 
-extern struct RSDP_Rev1_t* rsdp;
+extern void* entries_table;

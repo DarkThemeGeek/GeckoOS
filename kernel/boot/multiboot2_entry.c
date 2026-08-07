@@ -33,8 +33,9 @@ void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
     g_multiboot2_magic = magic;
     g_mbi_addr         = mbi_addr;
 
-    int valid = (magic == MULTIBOOT2_BOOTLOADER_MAGIC) ||
-                (magic == MULTIBOOT1_BOOTLOADER_MAGIC);
+    int valid = (magic == MULTIBOOT2_BOOTLOADER_MAGIC); // ||
+            //    (magic == MULTIBOOT1_BOOTLOADER_MAGIC); // Why whould you support multiboot1 if the stuff that works with multiboot2 wont work, this is useless
+            // Maybe someone will add support to multiboot1, but for now this will be removed
 
     if (!valid) { // Not working (Dosen't print anything with the new way to print things)
 /*         volatile uint16_t *vga = (volatile uint16_t *)0xB8000;

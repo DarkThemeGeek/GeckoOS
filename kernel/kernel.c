@@ -1,5 +1,5 @@
+#include "drivers/acpi/entries.h"
 #include "drivers/acpi/rsdp.h"
-#include "drivers/acpi/rsdt.h"
 #include "drivers/mouse.h"
 #include "drivers/tables/isr.h"
 #include "drivers/tables/tss.h"
@@ -74,8 +74,8 @@ void _entry() {
     terminal_init();
     timer_phase(50);
 
-    rsdp_init();
-    rsdt_init();
+    table_init();
+    entries_init();
 
     printc("Enabling paging (Already activated from boot)...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
@@ -85,7 +85,7 @@ void _entry() {
     register_interrupt_handler(INT_PAGEFAULT, page_fault);
 
     printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
-    parse_rsdt_entries();
+    parse_entries();
 
     drives_init();
     enumerate_pci();

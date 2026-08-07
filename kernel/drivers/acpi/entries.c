@@ -1,4 +1,4 @@
-#include "drivers/acpi/rsdt.h"
+#include "drivers/acpi/entries.h"
 #include "drivers/acpi/rsdp.h"
 #include "mem/physical_mem.h"
 #include <stdint.h>
@@ -6,28 +6,19 @@
 #include <terminal/printf.h>
 #include <stddef.h>
 
-struct RSDT* rsdt;
+struct Entries* entries;
 
 uint32_t local_apic_address;
 
-
-void rsdt_init() {
-    rsdt = (struct RSDT*)get_rsdt();
+void entries_init() {
+    entries = ((struct Table_Rev1_t*)entries_table)->Revision >= 2 ? (struct Entries*)((struct Table_Rev2_t*)entries_table)->XsdtAddress : (struct Entries*)(size_t)((struct Table_Rev1_t*)entries_table)->RsdtAddress;
 }
 
-_Bool check_rsdt() {
-    if (*(uint32_t*)rsdt->header.Signature != 0x54445352) return 0;
+void parse_entries() {
+    int entries_count = (entries->header.Length - sizeof(entries->header)) / 4;
 
-    uint8_t sum = 0;
-    for (size_t i = 0; i < rsdt->header.Length; i++) sum += ((uint8_t *) rsdt)[i];
-    return sum != 0;
-}
-
-void parse_rsdt_entries() {
-    int entries = (rsdt->header.Length - sizeof(rsdt->header)) / 4;
-
-    for (int i = 0; i < entries; i++) {
-        struct SDT_header *h = (struct SDT_header*)rsdt->entries[i];
+    for (int i = 0; i < entries_count; i++) {
+        struct SDT_header *h = (struct SDT_header*)entries->entries[i];
         #ifdef DEBUG
             printf("0x%X\t", *(uint64_t*)h->Signature);
         #endif

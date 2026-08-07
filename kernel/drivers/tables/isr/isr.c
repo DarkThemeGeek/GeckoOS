@@ -40,7 +40,7 @@ void isr_handler(registers_t *regs) {
         handler(regs);
     } else {
         char check = regs->int_no > 21;
-        printf("\nThe interruption 0x%x dosen't has a designed handler!%s%s\n", regs->int_no,
+        printf("The interruption 0x%x dosen't has a designed handler!%s%s\n", regs->int_no,
             check > 21 ? "" : " But that interruption has an error string: ",
             check > 21 ? "" : interrupt_string_table[regs->int_no]);     
     }

@@ -23,7 +23,7 @@ struct SDT_header {
     uint32_t CreatorRevision;
 } __attribute__ ((packed));
 
-struct RSDT {
+struct Entries {
     struct SDT_header header;
     uint32_t entries[];
 } __attribute__ ((packed));
@@ -117,8 +117,7 @@ static const struct ACPIItem ACPITable[22] = { // Every ACPI Signature is conver
 };
 static const size_t ACPITableSize = sizeof(ACPITable) / sizeof(struct ACPIItem);
 
-void rsdt_init();
-_Bool check_rsdt();
-void parse_rsdt_entries();
+void entries_init();
+void parse_entries();
 
-extern struct RSDT* rsdt;
+extern struct Entries* entries;

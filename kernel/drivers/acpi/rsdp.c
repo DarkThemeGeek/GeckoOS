@@ -1,4 +1,3 @@
-#include "drivers/acpi/rsdt.h"
 #include "mem/paging.h"
 #include <drivers/acpi/rsdp.h>
 #include <stddef.h>
@@ -6,19 +5,25 @@
 #include <terminal/printf.h>
 #include <boot/multiboot2.h>
 
-struct RSDP_Rev1_t* rsdp;
+void* entries_table;
 
 extern struct multiboot2_tag_acpi* acpi_info_grub;
-void rsdp_init() {
-    rsdp = ((struct RSDP_Rev1_t*)acpi_info_grub->rsdp);
+void table_init() {
+    entries_table = ((struct RSDP_Rev1_t*)acpi_info_grub->rsdp);
 }
 
-void dumprsdp() {
-    printf("RSDP Signature: "); for (int i = 0; i < (int)sizeof(rsdp->Signature); i++) { printf("%c", rsdp->Signature[i]); }
+void dumptable() {
+    const struct Table_Rev2_t* table = (const struct Table_Rev2_t*)entries_table;
+
+    printf("Table Signature: "); for (int i = 0; i < (int)sizeof(table->header.Signature); i++) { printf("%c", table->header.Signature[i]); }
     printf("\n");
-    printf("RSDP OEMID: "); for (int i = 0; i < (int)sizeof(rsdp->OEMID); i++) { printf("%c", rsdp->OEMID[i]); }
+    printf("Table OEMID: "); for (int i = 0; i < (int)sizeof(table->header.OEMID); i++) { printf("%c", table->header.OEMID[i]); }
     printf("\n");
-    printf("RSDP Revision: %d\n", rsdp->Revision);
-    printf("RSDP RSDT: 0x%p\n", rsdp->RsdtAddress);
+    printf("Table Revision: %d\n", table->header.Revision);
+    if (table->header.Revision <= 1) printf("Table RSDT: 0x%p\n", table->header.RsdtAddress);
+
+    if (table->header.Revision >= 2) goto Rev2;
+    return;
+Rev2:
+    printf("Table XSDT: 0x%p\n", table->XsdtAddress);
 }
-struct SDT_header* get_rsdt() { return (struct SDT_header*)rsdp->RsdtAddress; }

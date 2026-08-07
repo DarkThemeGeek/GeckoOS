@@ -1,3 +1,5 @@
+#include "drivers/acpi/rsdp.h"
+#include "drivers/acpi/rsdt.h"
 #include "drivers/tables/isr.h"
 #include "terminal/terminal.h"
 #include "terminal/printf.h"
@@ -16,7 +18,7 @@ static uint64_t mmio_virt_next = MMIO_VIRT_BASE;
 page_table_t *alloc_table(void)
 {
     page_table_t *t = (page_table_t *)allocate_blocks(1);
-    if (t) memset(t, 0, sizeof(page_table_t)); // TODO: use rep stosd
+    if (t) memset(t, 0, sizeof(page_table_t));
     return t;
 }
 
@@ -104,6 +106,12 @@ bool vmm_init(void)
             return false;
     }
 
+    // the acpi
+    for (uint64_t phys = 0; phys < 0xF000; phys += PAGE_SIZE) {
+        if (!vmm_map(pml4, (uint64_t)rsdt + phys, (uint64_t)rsdt + phys, PTE_PRESENT | PTE_WRITABLE))
+            return false;
+    }
+
     extern uint64_t g_fb_addr;
     extern uint32_t g_fb_height;
     extern uint32_t g_fb_pitch;
@@ -171,9 +179,8 @@ void page_fault(registers_t* regs) {
     if (rw) {print("read-only ");}
     if (us) {print("user-mode ");}
     if (reserved) {print("reserved ");}
-    print(") at 0x");
-    print_hex(faulting_address);
-    print("\n");
+    print(") at ");
+    printf("0x%016p\nHalting...", faulting_address);
     print("Halting...");
     for (;;) asm("hlt");
 } 

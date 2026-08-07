@@ -16,8 +16,7 @@ void rsdt_init() {
 }
 
 _Bool check_rsdt() {
-    for (int i = 0; i < (int)sizeof(rsdt->header.Signature); i++)
-        if (rsdt->header.Signature[i] != RSDP_MAGIC[i]) return 0;
+    if (*(uint32_t*)rsdt->header.Signature != 0x54445352) return 0;
 
     uint8_t sum = 0;
     for (size_t i = 0; i < rsdt->header.Length; i++) sum += ((uint8_t *) rsdt)[i];
@@ -62,5 +61,5 @@ static void parse_apic(struct SDT_header* header) {
 
         curl += ApicEntry->lenght;
     }
-    printf("APIC: Detected %d cores\n", CPUs_count);
+    printf("APIC: Detected %d core/s\n", CPUs_count);
 }

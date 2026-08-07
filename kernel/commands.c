@@ -794,11 +794,8 @@ static void cmd_processes(uint8_t color) {
 }
 
 static void cmd_showrsdt(uint8_t color) {
-    if (check_rsdp() != 1 || check_rsdt() != 1) {
-        printf("\nThe RSDP or RSDT have an invalid Signature or checksum\n");
-        return;
-    }
-    parse_rsdt_entries();
+    // parse_rsdt_entries();
+    dumprsdp();
 }
 
 static int streq(unsigned char *a, char *b) {

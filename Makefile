@@ -70,7 +70,7 @@ run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 -m 8G \
-	  -device e1000,netdev=net0 \
+	  -device e1000,netdev=net0 -machine acpi=on \
 	  -monitor stdio # -smp 4 # -d int,pcall
 clean:
 	rm -f $(OBJECTS) $(DEPS)

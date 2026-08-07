@@ -25,6 +25,7 @@
 #include "fs/fs.h"
 #include "ports.h"
 #include <exe.h>
+#include <boot/multiboot2.h>
 
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
@@ -67,6 +68,9 @@ void _entry() {
     terminal_init();
     timer_phase(50);
 
+    rsdp_init();
+    rsdt_init();
+
     printc("Enabling paging (Already activated from boot)...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
         printc("vmm_init failed -- halting\n", VGA_COLOR_RED);
@@ -74,12 +78,8 @@ void _entry() {
     }
     register_interrupt_handler(INT_PAGEFAULT, page_fault);
 
-    rsdp_init();
-    rsdt_init();
-    
-    initialize_memory_region((uint64_t)rsdp, 250000);
     printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
-    // parse_rsdt_entries(); // This cause a pagefault in systems with more than 1GB of ram, even if the vmm isn't enabled (The paging is enable since boot)
+    parse_rsdt_entries(); // This cause a pagefault in systems with more than 1GB of ram, even if the vmm isn't enabled (The paging is enable since boot)
 
     drives_init();
     enumerate_pci();

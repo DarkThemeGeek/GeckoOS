@@ -52,56 +52,56 @@ void pci_writeb(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off, uint8_
     pci_writel(bus, slot, func, align, (o & ~(0xff << shift)) | ((uint32_t)data << shift));
 }
 
+#define PCI_CLASSES_NUM 9
+const char* pci_classes[PCI_CLASSES_NUM] = {
+    "Unclassified",
+    "Mass Storage Controller",
+    "Network Controller",
+    "Display Controller",
+    "Multimedia Controller",
+    "Memory Controller",
+    "Bridge",
+    "Simple Communication Controller",
+    "Base System Peripheral"
+};
+
 static const char *class2str(uint8_t class) {
-    switch (class) {
-    case 0x00: return "Unclassified";
-    case 0x01: return "Mass Storage Controller";
-    case 0x02: return "Network Controller";
-    case 0x03: return "Display Controller";
-    case 0x04: return "Multimedia Controller";
-    case 0x05: return "Memory Controller";
-    case 0x06: return "Bridge";
-    case 0x07: return "Simple Communication Controller";
-    case 0x08: return "Base System Peripheral";
-    default:   return "Unknown";
-    }
+    if (class > PCI_CLASSES_NUM || class < 0) return "Unknown";
+    return pci_classes[class];
 }
 
 static const char *nic_vendor_str(uint16_t vendor) {
     switch (vendor) {
-    case 0x8086: return "Intel";
-    case 0x10EC: return "Realtek";
-    case 0x14E4: return "Broadcom";
-    case 0x1022: return "AMD";
-    case 0x15AD: return "VMware";
-    default:     return NULL;
-    }
+        case 0x8086: return "Intel";
+        case 0x10EC: return "Realtek";
+        case 0x14E4: return "Broadcom";
+        case 0x1022: return "AMD";
+        case 0x15AD: return "VMware";
+    } return NULL;
 }
 
 static const char *nic_model_str(uint16_t vendor, uint16_t device) {
-    if (vendor == 0x8086) {
-        switch (device) {
-        case 0x100E: return "82540EM";
-        case 0x100F: return "82545EM";
-        case 0x10D3: return "82574L";
-        case 0x1533: return "I210";
-        case 0x15B8: return "I219-V";
-        }
-    }
-    if (vendor == 0x10EC) {
-        switch (device) {
-        case 0x8139: return "RTL8139";
-        case 0x8168: return "RTL8111/8168B";
-        case 0x8125: return "RTL8125";
-        }
-    }
-    if (vendor == 0x15AD) {
-        switch (device) {
-        case 0x0720: return "VMXNET3";
-        case 0x0740: return "PCnet32";
-        }
-    }
-    return NULL;
+    switch (vendor) {
+        case 0x8086:
+            switch (device) {
+                case 0x100E: return "82540EM";
+                case 0x100F: return "82545EM";
+                case 0x10D3: return "82574L";
+                case 0x1533: return "I210";
+                case 0x15B8: return "I219-V";
+            } break;
+        case 0x10EC:
+            switch (device) {
+                case 0x8139: return "RTL8139";
+                case 0x8168: return "RTL8111/8168B";
+                case 0x8125: return "RTL8125";
+            } break;
+        case 0x15AD:
+            switch (device) {
+                case 0x0720: return "VMXNET3";
+                case 0x0740: return "PCnet32";
+            } break;
+    } return NULL;
 }
 
 static void alloc_new_bus(struct pci_bus *parent, struct pci_dev *self) {

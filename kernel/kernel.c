@@ -1,3 +1,5 @@
+#include "drivers/acpi/rsdp.h"
+#include "drivers/acpi/rsdt.h"
 #include "drivers/mouse.h"
 #include "drivers/tables/isr.h"
 #include "drivers/tables/tss.h"
@@ -65,7 +67,12 @@ void _entry() {
     terminal_init();
     timer_phase(50);
 
-    printc("Enabling paging...\n", VGA_COLOR_LIGHT_GREY);
+    rsdp_init();
+    rsdt_init();
+    printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
+    parse_rsdt_entries();
+
+    printc("Enabling paging (Already activated from boot)...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
         printc("vmm_init failed -- halting\n", VGA_COLOR_RED);
         for (;;) asm volatile("hlt");
@@ -83,10 +90,13 @@ void _entry() {
 }
 
 static void kmain() {
-    get_kdrive(0);
+    // get_kdrive(0);
 
-    run_command("fsmount", TERM_COLOR);
-    printc("\n", TERM_COLOR);
+    for (int i = 1; i < 6; i++) {
+        printf("Trying drive %d", i);
+        if (fsmount(i)) break;
+    } if (!fs)
+        printc("The drives 1 - 5 don't have any disk attached (Or it failed when mounting the FAT32 filesystem)\n\n", VGA_COLOR_RED);
 
     while (1) {
         printc("gecko> ", PROMPT_COLOR);

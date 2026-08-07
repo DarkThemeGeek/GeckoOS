@@ -1,3 +1,5 @@
+#include "drivers/acpi/rsdp.h"
+#include "drivers/acpi/rsdt.h"
 #include "exe.h"
 #include "process/process.h"
 #include "terminal/printf.h"
@@ -21,6 +23,8 @@
 #include <net/icmp.h>
 #include <net/arp.h>
 #include <drivers/e1000.h>
+
+extern uint32_t memsize_grub;
 
 // Command table
 static Command commands[] = {
@@ -62,11 +66,11 @@ static Command commands[] = {
     { "ping",         cmd_ping         },
     // --- proccess ---
     { "processes",    cmd_processes    },
+    // --- ACPI ---
+    { "showrsdt",     cmd_showrsdt     },
 };
 
 static int num_commands = sizeof(commands) / sizeof(commands[0]);
-
-struct drive_fs_t *fs;
 
 static const char* help_lines[] = {
     "--- System ---",
@@ -111,6 +115,9 @@ static const char* help_lines[] = {
     "",
     "--- Network ---",
     "ping <ip>   - Ping an IP address (e.g. ping 10.0.2.2)",
+    "",
+    "--- ACPI ---",
+    "showrsdt    - Show the entries of the ACPI (The qemu ACPI is very old)",
     "",
     0
 };
@@ -249,17 +256,11 @@ static void cmd_print_ticks(uint8_t color) {
 }
 
 static void cmd_fsmount(uint8_t color) {
-    printc("\n", color);
-    if (!get_kdrive(1)) {
-        printc("No slave drive found. Is fat32.img attached as a second drive?\n", VGA_COLOR_RED);
-        return;
+    putchar('\n', color);
+    for (int i = 1; i < 6; i++) {
+        printf("Trying drive %d", i);
+        if (fsmount(i)) break;
     }
-    fs = fs_drive_open(get_kdrive(1));
-    if (fs == 0) {
-        printc("Filesystem mount failed. Is fat32.img a valid FAT32 image?\n", VGA_COLOR_RED);
-        return;
-    }
-    printc("Filesystem mounted successfully.\n", color);
 }
 
 static void cmd_ls(uint8_t color) {
@@ -559,6 +560,7 @@ static void cmd_meminfo(uint8_t color) {
     printc("\nMemory:\n", color);
     printc("  Heap base : 0x200000\n", color);
     printc("  Heap end  : 0x500000 (3 MB window, hardcoded)\n", color);
+    printf( "  Memory size (This isn't exact, This will be less for around 42%%)  : %dMb\n", memsize_grub / 1048576);
     printc("  TODO: wire up Multiboot2 memory map (Phase 1)\n", color);
     printc("\n", color);
 }
@@ -789,6 +791,14 @@ static void cmd_runelf(uint8_t color) {
 
 static void cmd_processes(uint8_t color) {
     printf("\nProcesses count: %d\n", nr_processes);
+}
+
+static void cmd_showrsdt(uint8_t color) {
+    if (check_rsdp() != 1 || check_rsdt() != 1) {
+        printf("\nThe RSDP or RSDT have an invalid Signature or checksum\n");
+        return;
+    }
+    parse_rsdt_entries();
 }
 
 static int streq(unsigned char *a, char *b) {

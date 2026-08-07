@@ -54,6 +54,9 @@ static void cmd_ping(uint8_t color);
 // Processes
 static void cmd_processes(uint8_t color);
 
+// ACPI
+static void cmd_showrsdt(uint8_t color);
+
 // Dispatcher
 static int streq(unsigned char *a, char *b);
 void run_command(unsigned char *input, uint8_t color);

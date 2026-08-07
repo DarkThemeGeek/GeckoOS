@@ -71,7 +71,7 @@ run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	  -boot order=d \
 	  -netdev user,id=net0 \
 	  -device e1000,netdev=net0 \
-	  -monitor stdio # -d int,pcall
+	  -monitor stdio # -smp 4 # -d int,pcall
 clean:
 	rm -f $(OBJECTS) $(DEPS)
 	rm -f kernel.elf gecko.iso

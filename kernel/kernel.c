@@ -33,6 +33,8 @@ void process_input(unsigned char *buffer) {
 
 static void kmain();
 
+extern struct multiboot2_tag_bootloader_name* bootloader_info;
+
 __attribute__((section(".text.entry")))
 void _entry() {
     serial_init();
@@ -54,7 +56,11 @@ void _entry() {
 
     vga_clear(TERM_COLOR);
     printc("GeckoOS Version 2.0\n", TERM_COLOR);
-    printc("Booted via GRUB/Multiboot2.\n", TERM_COLOR);
+    #ifdef DEBUG
+        printf("Booted via %s/Multiboot2.\n", bootloader_info->string);
+    #else
+        printc("Booted via GRUB/Multiboot2.\n", TERM_COLOR);
+    #endif
 
     set_layout(LAYOUTS[0]);
     printc("Enabling IDT...\n", VGA_COLOR_LIGHT_GREY);
@@ -79,7 +85,7 @@ void _entry() {
     register_interrupt_handler(INT_PAGEFAULT, page_fault);
 
     printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
-    parse_rsdt_entries(); // This cause a pagefault in systems with more than 1GB of ram, even if the vmm isn't enabled (The paging is enable since boot)
+    parse_rsdt_entries();
 
     drives_init();
     enumerate_pci();

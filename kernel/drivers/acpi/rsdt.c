@@ -28,16 +28,22 @@ void parse_rsdt_entries() {
 
     for (int i = 0; i < entries; i++) {
         struct SDT_header *h = (struct SDT_header*)rsdt->entries[i];
-        printf("0x%X\t", *(uint64_t*)h->Signature);
+        #ifdef DEBUG
+            printf("0x%X\t", *(uint64_t*)h->Signature);
+        #endif
 
         for (int y = 0; y < ACPITableSize; y++) {
             if ((*(uint32_t*)h->Signature) == ACPITable[y].key) {
-                printf("Has it own dedicated function, running...\n");
+                #ifdef DEBUG
+                    printf("Has it own dedicated function, running...\n");
+                #endif
                 if (ACPITable[y].func) ACPITable[y].func(h);
                 break;
             }
         }
-        printf("\n");
+        #ifdef DEBUG
+            printf("\n");
+        #endif
     }
 }
 
@@ -66,5 +72,7 @@ static void parse_apic(struct SDT_header* header) {
 
         curl += ApicEntry->lenght;
     }
-    printf("APIC: Detected %d core/s", CPUs_count);
+    #ifdef DEBUG
+        printf("APIC: Detected %d core/s", CPUs_count);
+    #endif
 }

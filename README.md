@@ -49,6 +49,8 @@ sudo apt install clang nasm binutils grub-common xorriso qemu-system-x86 mtools 
 
 ### Build and run
 
+Note: The DEBUG mode is activated by default
+
 **Step 1 — Create the FAT32 data disk:**
 ```bash
 make fat32.img

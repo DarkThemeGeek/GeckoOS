@@ -22,6 +22,10 @@ uint8_t  g_fb_bpp;
 uint32_t memsize_grub; // mem_lower * mem_upper
 struct multiboot2_tag_acpi* acpi_info_grub;
 
+#ifdef DEBUG
+    struct multiboot2_tag_bootloader_name* bootloader_info;
+#endif
+
 extern void _entry(void);
 
 void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
@@ -32,7 +36,7 @@ void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
     int valid = (magic == MULTIBOOT2_BOOTLOADER_MAGIC) ||
                 (magic == MULTIBOOT1_BOOTLOADER_MAGIC);
 
-    if (!valid) { // Not working (Dosen't print anything)
+    if (!valid) { // Not working (Dosen't print anything with the new way to print things)
 /*         volatile uint16_t *vga = (volatile uint16_t *)0xB8000;
         const char msg[] = "BAD MULTIBOOT MAGIC";
         uint8_t attr = (VGA_COLOR_BLACK << 4) | VGA_COLOR_LIGHT_RED;
@@ -65,6 +69,12 @@ void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
                 case MULTIBOOT2_TAG_TYPE_ACPI_OLD:
                     acpi_info_grub = ((struct multiboot2_tag_acpi*)tag);
                     break;
+                #ifdef DEBUG
+                    case MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME:
+                        bootloader_info = ((struct multiboot2_tag_bootloader_name*)tag);
+                        break;
+                #endif
+
                 case MULTIBOOT2_TAG_TYPE_END: goto exit;
             }
             tag = MULTIBOOT2_TAG_NEXT(tag);

@@ -794,7 +794,11 @@ static void cmd_processes(uint8_t color) {
 }
 
 static void cmd_showrsdt(uint8_t color) {
-    printf("\n");
+    #ifndef DEBUG
+        printf("\nThis commands only shows output if this OS was compiled in DEBUG mode\n");
+    #else
+        printf("\n");
+    #endif
     parse_rsdt_entries();
 }
 

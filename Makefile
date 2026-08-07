@@ -1,7 +1,7 @@
 # Makefile to make and run with QEMU. //ember2819
 CC      = clang
 AS      = nasm
-LD      = ld # *should* support all arch on any arch (x86 on arm, x86_64 on arm, etc)
+LD      = ld
 OBJCOPY = objcopy
 
 include_folder = include
@@ -9,7 +9,7 @@ CC_FLAGS = -target x86_64-elf -march=x86-64 -m64 -MMD -MP \
            -ffreestanding -nostdlib -fno-builtin -fno-stack-protector \
            -mno-red-zone -mcmodel=kernel \
            -mno-sse -mno-sse2 -mno-avx \
-           -g -c $(addprefix -I,$(include_folder))
+           -g -c $(addprefix -I,$(include_folder)) -DDEBUG
 LD_FLAGS = -m elf_x86_64
 
 SOURCES := $(shell find ./kernel -name "*.c" -o -name "*.s")

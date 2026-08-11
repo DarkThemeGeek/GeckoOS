@@ -6,6 +6,7 @@
 #include "ports.h"
 #include "string.h"
 #include "terminal/terminal.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <terminal/printf.h>
 #include <drivers/tables/timer.h>
@@ -294,6 +295,7 @@ int acpi_init()
                                 printf("FAIL: Could notmap header\n");
                                 continue;
                             }
+                            uint32_t length = hdr->length;
 
                             switch (*(uint32_t*)hdr->signature) {
                                 case 0x43495041: // MADT
@@ -301,16 +303,16 @@ int acpi_init()
                                            sizeof(struct acpi_header));
                                     // Map full MADT
                                     madt = (struct acpi_madt *)mmio_map(
-                                        entries[i], hdr->length);
-                                    printf("MADT mapped at %p,length=%u\n",madt, hdr->length);
+                                        entries[i], length);
+                                    printf("MADT mapped at %p,length=%u\n",madt, length);
                                     break;
                                 case 0x50434141: // FADT
                                     mmio_unmap((uintptr_t)hdr,
                                            sizeof(struct acpi_header));
                                     // Map full FADT
                                     fadt = (acpi_fadt_t *)mmio_map(
-                                        entries[i], hdr->length);
-                                    printf("fadt mapped at %p,length=%u\n",fadt, hdr->length);
+                                        entries[i], length);
+                                    printf("fadt mapped at %p,length=%u\n",fadt, length);
                                     break;
                                 default:
                                     break;

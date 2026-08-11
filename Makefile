@@ -76,7 +76,7 @@ run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 VBOXCreateMachine:
 	VBoxManage createvm --name "GECKOOS" --ostype "Other_64" --register
 	VBoxManage storagectl "GECKOOS" --name "IDE Controller" --add ide
-run-virtualbox:
+run-virtualbox: # You have to create the machine first, then you can run geckos in virtualbox
 	VBoxManage storageattach "GECKOOS" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium gecko.iso
 	VBoxManage startvm "GECKOOS"
 

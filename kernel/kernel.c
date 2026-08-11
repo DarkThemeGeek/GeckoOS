@@ -86,7 +86,10 @@ void _entry() {
     register_interrupt_handler(INT_INVINS, ud_exception_handler);
 #endif
 
-    acpi_init();
+    printc("Enabling ACPI\n", VGA_COLOR_LIGHT_GREY);
+    if (acpi_init() != 0) {
+        printc("acpi_init failed\n", VGA_COLOR_RED);
+    }
 
     drives_init();
     enumerate_pci();

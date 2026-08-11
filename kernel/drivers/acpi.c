@@ -54,7 +54,7 @@ manual:
     for (uint64_t p = 0x000E0000; p < 0x000FFFFF; p += 16)
         if (*(uint64_t*)p == 0x5253442050545220) return (void*)p;
     // If nothing was found, keep searching from 0x40E to 0x40E + 1KIB (EBDA memory),
-    for (uint64_t p = 0x40E; p < 0x40E + 1024; p += 16)
+    for (uint64_t p = (0x40E * 0x10) & 0x000FFFFF; p < 0x40E + 1024; p += 0x10 / sizeof(p))
         if (*(uint64_t*)p == 0x5253442050545220) return (void*)p;
 nothing:
     printf("No ACPI tag found!\n");
@@ -267,10 +267,6 @@ int acpi_init()
             if (!xsdt_header) {
                 printf("FAIL: Could not map XSDT header\n");
             } else {
-                printf("XSDT signature: %.4s\n",
-                xsdt_header->signature);
-                printf("XSDT length: %u\n", xsdt_header->length);
-
                 if (*(uint32_t*)xsdt_header->signature == 0x54445358) {
                     // Map full XSDT
                     struct acpi_header *xsdt = (struct acpi_header *)mmio_map(
@@ -296,7 +292,6 @@ int acpi_init()
                                 continue;
                             }
                             uint32_t length = hdr->length;
-
                             switch (*(uint32_t*)hdr->signature) {
                                 case 0x43495041: // MADT
                                     mmio_unmap((uintptr_t)hdr,
@@ -304,7 +299,6 @@ int acpi_init()
                                     // Map full MADT
                                     madt = (struct acpi_madt *)mmio_map(
                                         entries[i], length);
-                                    printf("MADT mapped at %p,length=%u\n",madt, length);
                                     break;
                                 case 0x50434141: // FADT
                                     mmio_unmap((uintptr_t)hdr,
@@ -312,7 +306,6 @@ int acpi_init()
                                     // Map full FADT
                                     fadt = (acpi_fadt_t *)mmio_map(
                                         entries[i], length);
-                                    printf("fadt mapped at %p,length=%u\n",fadt, length);
                                     break;
                                 default:
                                     break;
@@ -331,8 +324,6 @@ int acpi_init()
 
     // Try RSDT fallback
     if (!madt && rsdp->rsdt_addr != 0) {
-        printf("Trying RSDT at 0x%x\n", rsdp->rsdt_addr);
-
         struct acpi_header *rsdt_header = (struct acpi_header *)mmio_map(
             rsdp->rsdt_addr, sizeof(struct acpi_header));
         // printf("\n %p \n", rsdt_header);
@@ -395,13 +386,27 @@ int acpi_init()
     // printf("LAPIC mapped at %p\n", acpi_lapic_base);
     
     // activate the acpi
-    if (fadt->smiCommandPort) {
-        outb(fadt->smiCommandPort, fadt->acpiEnable);
-        sleep(3);
-        while ((inw(fadt->pm1aControlBlk) & 1) == 0);
+    if ((inw(fadt->pm1aControlBlk) & 1) == 0) {
+        if (fadt->smiCommandPort != 0 && fadt->acpiEnable != 0) {
+            outb(fadt->smiCommandPort, fadt->acpiEnable);
+
+            uint16_t i;
+            for (i = 0; i < 300; i++) {
+                if ( (inw((unsigned int) fadt->pm1aControlBlk) & 1) == 1 )
+                    break;
+                sleep(1);
+            }
+            if (fadt->pm1bControlBlk != 0)
+                for (int i = 0 ; i < 300; i++) {
+                    if ( (inw((unsigned int) fadt->pm1aControlBlk) & 1) == 1 )
+                        break;
+                    sleep(1);
+                }
+        } else {
+            return -1;
+        }
     }
     irq_install_handler(fadt->sciInterrupt, acpi_irq_handler);
-    printf("Power management: %d\n", fadt->preferredPMProfile);
 
     return 0;
 }

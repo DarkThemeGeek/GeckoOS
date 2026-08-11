@@ -98,8 +98,8 @@ static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
 void mouse_handler(registers_t *r)
 {
-    static uint8_t mouse_cycle = 0;
-    static char mouse_byte[4];
+    // static uint8_t mouse_cycle = 0;
+    // static char mouse_byte[4];
 
     switch (mouse_cycle) {
     case 0:
@@ -169,7 +169,7 @@ void set_mouse_rate(uint8_t rate)
     uint8_t status;
     mouse_wait(true);
     outb(PS2_CMD_PORT, MOUSE_CMD_CMD);
-    uint8_t ack = mouse_read();
+    // uint8_t ack = mouse_read();
 
     outb(MOUSE_DATA_PORT, MOUSE_CMD_SAMPLE_RATE);
     status = mouse_read();
@@ -179,7 +179,7 @@ void set_mouse_rate(uint8_t rate)
     }
     mouse_wait(true);
     outb(PS2_CMD_PORT, MOUSE_CMD_CMD);
-    ack = mouse_read();
+    // ack = mouse_read();
 
     outb(MOUSE_DATA_PORT, rate);
     status = mouse_read();
@@ -289,7 +289,7 @@ void mouse_init()
     }
 
     // set mouse handler
-    irq_install_handler(12, mouse_handler);
+    irq_install_handler(IRQ_PS2MOUSE, mouse_handler);
 }
 
 void register_mouse_callback(mouse_event_callback callback)

@@ -115,5 +115,5 @@ void keyboard_handler(registers_t* r)
 }
 //installing the handler of the pic
 void keyboard_install(){
-    irq_install_handler(1, keyboard_handler);
+    irq_install_handler(IRQ_KEYBOARD, keyboard_handler);
 }

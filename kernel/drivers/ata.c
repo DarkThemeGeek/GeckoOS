@@ -6,13 +6,10 @@
 #include <drivers/drives.h>
 #include <terminal/terminal.h>
 
-static int drive_present[2] = {0, 0};
+static int drive_present[4] = {0, 0};
 
 static void ata_delay(void) {
-    inb(ATA_PRIMARY_CTRL);
-    inb(ATA_PRIMARY_CTRL);
-    inb(ATA_PRIMARY_CTRL);
-    inb(ATA_PRIMARY_CTRL);
+    for (int i = 0; i < 4; i++) inb(ATA_PRIMARY_CTRL);
 }
 
 static int ata_wait_not_busy(void) {
@@ -47,21 +44,25 @@ static ssize_t ata_kdrive_write_sectors(struct kdrive_t *drive, size_t lba,
     return ata_write_sectors(drive->userdata1, lba, count, buf);
 }
 
-static int ata_check_drive(int drive) {
+uint16_t busses_by_drive[] = {
+    ATA_PRIMARY_BASE,
+    ATA_PRIMARY_BASE,
+    ATA_SECONDARY_BASE,
+    ATA_SECONDARY_BASE
+};
+
+static int ata_check_drive(int drive, char bus) /* BUS == 0: Depending on the drive, the bus will be 1 or 2 */ {
     drive_present[drive] = 0;
 
-    uint8_t select = drive ? ATA_SELECT_SLAVE : ATA_SELECT_MASTER;
+    uint16_t base = bus == 0 ? busses_by_drive[drive] : (bus ? ATA_SECONDARY_BASE : ATA_PRIMARY_BASE);
+    uint8_t select = ((drive & 1) == 0) ? ATA_SELECT_SLAVE : ATA_SELECT_MASTER;
 
     // Select drive and wait
-    outb(ATA_PRIMARY_BASE + ATA_REG_HDDEVSEL, select);
-    ata_delay();
-    ata_delay();
-    ata_delay();
-    ata_delay();
-    ata_delay();
+    outb(base + ATA_REG_HDDEVSEL, select);
+    for (int i = 0; i < 5; i++) ata_delay();
 
     // Check status — 0xFF means no drive on bus
-    uint8_t status = inb(ATA_PRIMARY_BASE + ATA_REG_STATUS);
+    uint8_t status = inb(base + ATA_REG_STATUS);
     if (status == 0xFF) return 0;
 
     // Wait for not busy
@@ -69,25 +70,24 @@ static int ata_check_drive(int drive) {
 
     // Try to read sector 0 as a presence test
     uint8_t lba_sel = (drive ? ATA_LBA_SLAVE : ATA_LBA_MASTER);
-    outb(ATA_PRIMARY_BASE + ATA_REG_HDDEVSEL, lba_sel);
+    outb(base + ATA_REG_HDDEVSEL, lba_sel);
     ata_delay();
-    outb(ATA_PRIMARY_BASE + ATA_REG_SECCOUNT, 1);
-    outb(ATA_PRIMARY_BASE + ATA_REG_LBA_LO,   0);
-    outb(ATA_PRIMARY_BASE + ATA_REG_LBA_MID,  0);
-    outb(ATA_PRIMARY_BASE + ATA_REG_LBA_HI,   0);
-    outb(ATA_PRIMARY_BASE + ATA_REG_COMMAND,   ATA_CMD_READ_PIO);
+    outb(base + ATA_REG_SECCOUNT, 1);
+    outb(base + ATA_REG_LBA_LO,   0);
+    outb(base + ATA_REG_LBA_MID,  0);
+    outb(base + ATA_REG_LBA_HI,   0);
+    outb(base + ATA_REG_COMMAND,   ATA_CMD_READ_PIO);
 
     ata_delay();
 
     if (ata_wait_not_busy() != 0) return 0;
 
-    status = inb(ATA_PRIMARY_BASE + ATA_REG_STATUS);
-    if (status & ATA_SR_ERR) return 0;
-    if (!(status & ATA_SR_DRQ)) return 0;
+    status = inb(base + ATA_REG_STATUS);
+    if (status & ATA_SR_ERR || !(status & ATA_SR_DRQ)) return 0;
 
     // Drain the data register
     for (int i = 0; i < 256; i++)
-        inw(ATA_PRIMARY_BASE + ATA_REG_DATA);
+        inw(base + ATA_REG_DATA);
 
     struct kdrive_t kdrive = {};
     kdrive.userdata1   = drive;
@@ -109,8 +109,8 @@ int ata_init(void) {
     drive_present[1] = 1;
     register_kdrive(&slave);
     int found = 0;
-    ata_check_drive(ATA_DRIVE_MASTER);
-    ata_check_drive(ATA_DRIVE_SLAVE);
+    ata_check_drive(ATA_DRIVE_MASTER, 0);
+    ata_check_drive(ATA_DRIVE_SLAVE, 0);
     if (drive_present[0]) found++;
     if (drive_present[1]) found++;
     return found;

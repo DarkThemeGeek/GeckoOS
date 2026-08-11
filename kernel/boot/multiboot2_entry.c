@@ -20,7 +20,7 @@ uint32_t g_fb_pitch;
 uint8_t  g_fb_bpp;
 
 uint32_t memsize_grub; // mem_lower * mem_upper
-struct multiboot2_tag_acpi* acpi_info_grub;
+struct multiboot2_tag_acpi* acpi_info_grub = NULL;
 
 #ifdef DEBUG
     struct multiboot2_tag_bootloader_name* bootloader_info;

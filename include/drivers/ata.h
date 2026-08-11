@@ -6,8 +6,10 @@
 #include <stdint.h>
 
 #define ATA_PRIMARY_BASE    0x1F0
+#define ATA_SECONDARY_BASE  0x1E8 // Through 0x1EF
 
 #define ATA_PRIMARY_CTRL    0x3F6
+#define ATA_SECONDARY_CTRL  0x168 // Through 0x16F
 
 #define ATA_REG_DATA        0x00
 #define ATA_REG_ERROR       0x01

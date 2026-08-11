@@ -47,7 +47,7 @@ grub-iso: kernel.elf grub-modules/i386-pc/modinfo.sh
 	@mkdir -p $(ISODIR)/boot/grub
 	cp kernel.elf         $(ISODIR)/boot/kernel.elf
 	cp boot/grub/grub.cfg $(ISODIR)/boot/grub/grub.cfg
-	grub-mkrescue -o gecko.iso $(ISODIR) --locale-directory=/usr/share/locale
+	grub-mkrescue --directory=grub-modules/i386-pc -o gecko.iso $(ISODIR) --locale-directory=/usr/share/locale
 	@echo "gecko.iso built. Boot with:  make run-grub"
 
 run-grub: gecko.iso
@@ -66,12 +66,20 @@ Elffile:
 
 run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	qemu-system-x86_64 \
-	  -cdrom gecko.iso \
+	  -cdrom gecko.iso -m 1G \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 \
 	  -device e1000,netdev=net0 -machine acpi=on \
-	  -monitor stdio # -smp 4 # -d int,pcall
+	  -monitor stdio # -M hpet=on -machine q35 # -smp 4 # -d int,pcall
+
+VBOXCreateMachine:
+	VBoxManage createvm --name "GECKOOS" --ostype "Other_64" --register
+	VBoxManage storagectl "GECKOOS" --name "IDE Controller" --add ide
+run-virtualbox:
+	VBoxManage storageattach "GECKOOS" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium gecko.iso
+	VBoxManage startvm "GECKOOS"
+
 clean:
 	rm -f $(OBJECTS) $(DEPS)
 	rm -f kernel.elf gecko.iso

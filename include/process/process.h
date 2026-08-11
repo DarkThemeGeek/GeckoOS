@@ -39,5 +39,5 @@ typedef struct Process {
 extern uint32_t        nr_processes;
 
 static void    switch_task(void);
-uint32_t       create_process(void *entry_point);
+uint32_t       create_process(void *entry_point, uint64_t entry_to, void *data_point, uint64_t data_to);
 static void    execute_process(Process *proc);

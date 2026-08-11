@@ -42,5 +42,6 @@ page_table_t *vmm_get_pml4(void);
 bool          vmm_set_pml4(page_table_t *pml4);
 
 uint64_t      mmio_map(uint64_t phys, uint64_t size);
+int mmio_unmap(uint64_t virt, uint64_t size);
 void page_fault(registers_t* regs);
 page_table_t *alloc_table(void);

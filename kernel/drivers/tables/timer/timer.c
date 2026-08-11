@@ -28,7 +28,7 @@ void timer_phase(int hz)
 void timer_install()
 {
     /* Installs 'timer_handler' to IRQ0 */
-    irq_install_handler(0, timer_handler);
+    irq_install_handler(IRQ_TIMER, timer_handler);
 }
 
 // FINALLY, the cpu was returning an int 6, but i set some variables to a pointer, and then it began working!

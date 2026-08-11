@@ -4,6 +4,17 @@
 
 isr_t interrupt_handlers[256];
 
+extern void kmain();
+void ud_exception_handler(registers_t* regs) {
+    printf("Exception UD\nInvalid Opcode: 0x%x in 0x%p\nJumping back to main function...\n", *(uint8_t*)regs->rip, regs->rip);
+    asm volatile(
+        "mov %0, %%rax\n"
+        "jmpq *%%rax"
+        : : "r"((uint64_t)kmain) // Everything will be slow for some reason
+    );
+    for(;;)asm volatile("hlt");
+}
+
 void register_interrupt_handler(uint8_t n, isr_t handler) {
     interrupt_handlers[n] = handler;
 } 

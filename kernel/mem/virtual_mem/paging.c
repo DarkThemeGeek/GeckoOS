@@ -1,5 +1,3 @@
-#include "drivers/acpi/entries.h"
-#include "drivers/acpi/rsdp.h"
 #include "drivers/tables/isr.h"
 #include "drivers/vga.h"
 #include "terminal/terminal.h"
@@ -107,12 +105,6 @@ bool vmm_init(void)
             return false;
     }
 
-    // the acpi
-    for (uint64_t phys = 0; phys < 0xF000; phys += PAGE_SIZE) {
-        if (!vmm_map(pml4, (uint64_t)entries + phys, (uint64_t)entries + phys, PTE_PRESENT | PTE_WRITABLE))
-            return false;
-    } printc("ACPI mapped...\n", VGA_COLOR_DARK_GREY);
-
     extern uint64_t g_fb_addr;
     extern uint32_t g_fb_height;
     extern uint32_t g_fb_pitch;
@@ -160,6 +152,22 @@ uint64_t mmio_map(uint64_t phys, uint64_t size)
     }
 
     return virt_base + offset;
+}
+
+int mmio_unmap(uint64_t virt, uint64_t size) {
+    page_table_t *pml4 = vmm_get_pml4();
+    if (!pml4) return -1;
+    
+    uint64_t virt_aligned = virt & ~(PAGE_SIZE - 1);
+    uint64_t offset = virt - virt_aligned;
+    uint64_t pages = (size + offset + PAGE_SIZE - 1) / PAGE_SIZE;
+    
+    for (uint64_t i = 0; i < pages; i++) {
+        // Unmap the page (set entry to 0)
+        vmm_unmap(pml4, virt_aligned + i * PAGE_SIZE) ;
+    }
+    
+    return 0;
 }
 
 // Panic (Page fault)

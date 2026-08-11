@@ -1,5 +1,3 @@
-#include "drivers/acpi/entries.h"
-#include "drivers/acpi/rsdp.h"
 #include "drivers/mouse.h"
 #include "drivers/tables/isr.h"
 #include "drivers/tables/tss.h"
@@ -26,14 +24,17 @@
 #include "ports.h"
 #include <exe.h>
 #include <boot/multiboot2.h>
+#include <drivers/acpi.h>
 
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
 }
 
-static void kmain();
+void kmain();
 
 extern struct multiboot2_tag_bootloader_name* bootloader_info;
+
+// uint64_t global_table;
 
 __attribute__((section(".text.entry")))
 void _entry() {
@@ -74,9 +75,6 @@ void _entry() {
     terminal_init();
     timer_phase(50);
 
-    table_init();
-    entries_init();
-
     printc("Enabling paging (Already activated from boot)...\n", VGA_COLOR_LIGHT_GREY);
     if (!vmm_init()) {
         printc("vmm_init failed -- halting\n", VGA_COLOR_RED);
@@ -84,8 +82,11 @@ void _entry() {
     }
     register_interrupt_handler(INT_PAGEFAULT, page_fault);
 
-    printc("Parsing the ACPI code...\n", VGA_COLOR_LIGHT_GREY);
-    parse_entries();
+#ifdef DEBUG
+    register_interrupt_handler(INT_INVINS, ud_exception_handler);
+#endif
+
+    acpi_init();
 
     drives_init();
     enumerate_pci();
@@ -94,17 +95,20 @@ void _entry() {
     net_init();
     arp_init();
 
+    // global_table = (uint64_t)vmm_get_pml4();
     kmain();
 }
 
-static void kmain() {
+void kmain() {
     // get_kdrive(0);
+    STI();
+    // vmm_set_pml4((page_table_t*)global_table);
 
-    for (int i = 1; i < 6; i++) {
+    for (int i = 0; i < 4; i++) {
         printf("Trying drive %d", i);
         if (fsmount(i)) break;
     } if (!fs)
-        printc("The drives 1 - 5 don't have any disk attached (Or it failed when mounting the FAT32 filesystem)\n\n", VGA_COLOR_RED);
+        printc("The drives 0 - 4 don't have any disk attached (Or it failed when mounting the FAT32 filesystem)\n\n", VGA_COLOR_RED);
 
     while (1) {
         printc("gecko> ", PROMPT_COLOR);

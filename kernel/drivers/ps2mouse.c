@@ -1,5 +1,7 @@
 
+#include "drivers/apic/lapic.h"
 #include "drivers/mouse.h"
+#include "drivers/apic/ioapic.h"
 #include "drivers/tables/irq.h"
 #include "drivers/vga.h"
 #include "ports.h"
@@ -98,8 +100,8 @@ static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
 void mouse_handler(registers_t *r)
 {
-    // static uint8_t mouse_cycle = 0;
-    // static char mouse_byte[4];
+    static uint8_t mouse_cycle = 0;
+    static char mouse_byte[4];
 
     switch (mouse_cycle) {
     case 0:
@@ -151,13 +153,14 @@ void mouse_handler(registers_t *r)
     md.x          = g_mouse_x_pos;
     md.y          = g_mouse_y_pos;
     md.scroll     = (int8_t)mouse_byte[3];
-    //printf("%x", md.scroll);
+    // printf("%x", md.scroll);
     if (mouse_event_run != NULL) {
         // Call the registered callback function
         mouse_event_run(md);
     } else {
         printf("No callback registered\n");
     }
+    lapic_write(LAPIC_REG_EOI, 0);
 }
 
 /**
@@ -169,7 +172,7 @@ void set_mouse_rate(uint8_t rate)
     uint8_t status;
     mouse_wait(true);
     outb(PS2_CMD_PORT, MOUSE_CMD_CMD);
-    // uint8_t ack = mouse_read();
+    uint8_t ack = mouse_read();
 
     outb(MOUSE_DATA_PORT, MOUSE_CMD_SAMPLE_RATE);
     status = mouse_read();
@@ -179,7 +182,7 @@ void set_mouse_rate(uint8_t rate)
     }
     mouse_wait(true);
     outb(PS2_CMD_PORT, MOUSE_CMD_CMD);
-    // ack = mouse_read();
+    ack = mouse_read();
 
     outb(MOUSE_DATA_PORT, rate);
     status = mouse_read();
@@ -202,10 +205,10 @@ void mouse_init()
     // enable mouse device
     mouse_wait(true);
     outb(PS2_CMD_PORT, MOUSE_CMD_CMD);
-    ack=mouse_read();
+    ack = mouse_read();
     outb(PS2_CMD_PORT, 0xA8);
 
-    //outb(MOUSE_DATA_PORT, 0xF5);
+    // outb(MOUSE_DATA_PORT, 0xF5);
 
     // print mouse id
 
@@ -243,7 +246,7 @@ void mouse_init()
     //* activating buttons
     mouse_wait(true);
     set_mouse_rate(200);
-    
+
     mouse_wait(true);
     set_mouse_rate(200);
     mouse_wait(true);
@@ -289,7 +292,7 @@ void mouse_init()
     }
 
     // set mouse handler
-    irq_install_handler(IRQ_PS2MOUSE, mouse_handler);
+    irq_install_handler(12, mouse_handler,0);
 }
 
 void register_mouse_callback(mouse_event_callback callback)

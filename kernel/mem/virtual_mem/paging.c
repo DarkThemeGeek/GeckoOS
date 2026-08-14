@@ -154,6 +154,28 @@ uint64_t mmio_map(uint64_t phys, uint64_t size)
     return virt_base + offset;
 }
 
+uint64_t mmio_map1(uint64_t phys, uint64_t virt, uint64_t flags, uint64_t size)
+{
+    page_table_t *pml4 = vmm_get_pml4();
+    if (!pml4) return 0;
+
+    uint64_t phys_aligned = phys & ~(PAGE_SIZE - 1);
+    uint64_t offset       = phys - phys_aligned;
+    uint64_t pages        = (size + offset + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    uint64_t virt_base = virt;
+
+    for (uint64_t i = 0; i < pages; i++) {
+        if (!vmm_map(pml4,
+                     phys_aligned + i * PAGE_SIZE,
+                     virt_base    + i * PAGE_SIZE,
+                     flags))
+            return 0;
+    }
+
+    return virt_base + offset;
+}
+
 int mmio_unmap(uint64_t virt, uint64_t size) {
     page_table_t *pml4 = vmm_get_pml4();
     if (!pml4) return -1;

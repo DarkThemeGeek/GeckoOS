@@ -21,12 +21,13 @@ uint8_t  g_fb_bpp;
 
 uint32_t memsize_grub; // mem_lower * mem_upper
 struct multiboot2_tag_acpi* acpi_info_grub = NULL;
+uint64_t max_addr_used     = 0; // To map physical memory
 
 #ifdef DEBUG
     struct multiboot2_tag_bootloader_name* bootloader_info;
 #endif
 
-extern void _entry(void);
+extern void _entry(uint64_t);
 
 void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
 {
@@ -75,12 +76,23 @@ void multiboot2_main(uint64_t magic, uint64_t mbi_addr)
                         bootloader_info = ((struct multiboot2_tag_bootloader_name*)tag);
                         break;
                 #endif
-
+                case MULTIBOOT2_TAG_TYPE_MMAP:
+                    struct multiboot2_tag_mmap *mmap_tag = (struct multiboot2_tag_mmap *)tag;
+                    struct multiboot2_mmap_entry *entry  = mmap_tag->entries;
+                    while ((uintptr_t)entry < (uintptr_t)tag + tag->size) {
+                        if (entry->type == MULTIBOOT2_MEMORY_AVAILABLE) {
+                            uint64_t region_end = entry->base_addr + entry->length;
+                            if (region_end > max_addr_used)
+                                max_addr_used = region_end;
+                        }
+                        entry = (multiboot2_mmap_entry_t *)((uintptr_t)entry +
+                                                            mmap_tag->entry_size);
+                    } break;
                 case MULTIBOOT2_TAG_TYPE_END: goto exit;
             }
             tag = MULTIBOOT2_TAG_NEXT(tag);
         }
     }
 exit:
-    _entry();
+    _entry(mbi_addr);
 }

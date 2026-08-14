@@ -4,6 +4,7 @@
 #include <mem/paging.h>
 #include <mem/physical_mem.h>
 #include <mem.h>
+#include "drivers/apic/ioapic.h"
 #include "terminal/printf.h"
 
 static volatile uint32_t *mmio_base = NULL;
@@ -96,7 +97,7 @@ static void tx_init(void) {
 
 static volatile int rx_pending = 0;
 
-static void e1000_irq_handler(registers_t *regs) {
+__attribute__((interrupt)) static void e1000_irq_handler(registers_t *regs) {
     (void)regs;
     uint32_t icr = e1000_read(E1000_ICR);
 
@@ -183,7 +184,7 @@ bool e1000_init(uint8_t bus, uint8_t slot, uint8_t func) {
         E1000_ICR_RXO);
 
     uint8_t irq_line = pci_readb(bus, slot, func, 0x3C);
-    irq_install_handler(irq_line, e1000_irq_handler);
+    irq_install_handler(irq_line, e1000_irq_handler,0x9);
     printf("e1000: init done, IRQ %d\n", irq_line);
 
     return true;

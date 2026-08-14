@@ -9,7 +9,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <terminal/printf.h>
-#include <drivers/tables/timer.h>
 #include <drivers/tables/irq.h>
 
 // Iterate trough multi boot info structure tags and search for rsdp v1 or v2
@@ -226,6 +225,8 @@ static int parse_madt_entries(struct acpi_madt *madt)
     return found_ioapic;
 }
 
+acpi_fadt_t *fadt = NULL;
+
 // Function that does the init for acpi and other stuff that needs parsing from
 // mbi_addr including lapic and ioapic
 int acpi_init()
@@ -253,7 +254,6 @@ int acpi_init()
     } */
 
     struct acpi_madt *madt = NULL;
-    acpi_fadt_t *fadt = NULL;
 
     // Try XSDT first v2 if revision exists
     if (rsdp->revision >= 2) {
@@ -358,6 +358,16 @@ int acpi_init()
                             case 0x50434146: // FADT
                                 fadt = (acpi_fadt_t *)mmio_map(
                                     entries[i], hdr->length);
+                                
+/*                                 struct acpi_header* dsdt = (struct acpi_header*)mmio_map((uint64_t)fadt->dsdt, sizeof(struct acpi_header));
+                                uint32_t amllenght = dsdt->length - sizeof(struct acpi_header);
+                                uint8_t* amlbytes = (uint8_t*)mmio_map((uint64_t)(dsdt + sizeof(struct acpi_header)), amllenght);
+
+                                uint32_t* S5Addr;
+                                for (uint32_t i = 0; i < amllenght; i++) {
+                                    printf("%p\n", &amlbytes[i]);
+                                    if (*((uint32_t*)&amlbytes[i]) == 0x5F35535F) break;
+                                } */
                                 break;
                             default:
                                 break;
@@ -386,7 +396,7 @@ int acpi_init()
     // printf("LAPIC mapped at %p\n", acpi_lapic_base);
     
     // activate the acpi
-    if ((inw(fadt->pm1aControlBlk) & 1) == 0) {
+/*     if ((inw(fadt->pm1aControlBlk) & 1) == 0) {
         if (fadt->smiCommandPort != 0 && fadt->acpiEnable != 0) {
             outb(fadt->smiCommandPort, fadt->acpiEnable);
 
@@ -398,18 +408,19 @@ int acpi_init()
             }
             if (fadt->pm1bControlBlk != 0)
                 for (int i = 0 ; i < 300; i++) {
-                    if ( (inw((unsigned int) fadt->pm1aControlBlk) & 1) == 1 )
+                    if ( (inw((unsigned int) fadt->pm1bControlBlk) & 1) == 1 )
                         break;
                     sleep(1);
                 }
         } else {
             return -1;
         }
-    }
-    irq_install_handler(fadt->sciInterrupt, acpi_irq_handler);
+    } */
 
     return 0;
 }
-void acpi_irq_handler(registers_t* regs) {
-    printf("ACPI called\n");
+int shutdown() {
+    if (!fadt) return -1;
+
+    return 0;
 }

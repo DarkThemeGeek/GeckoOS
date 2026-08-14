@@ -81,7 +81,6 @@ int fsmount(int drive) {
     fs = fs_drive_open(d);
     if (fs == 0) {
         printc("Filesystem mount failed. Is fat32.img a valid FAT32 image?\n", VGA_COLOR_RED);
-        fs = NULL;
         return -1;
     }
     printc("Filesystem mounted successfully.\n\n", VGA_COLOR_WHITE);

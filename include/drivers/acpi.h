@@ -126,3 +126,4 @@ extern uintptr_t acpi_ioapic_base;
 int acpi_init();
 
 void acpi_irq_handler(registers_t* regs);
+int shutdown();

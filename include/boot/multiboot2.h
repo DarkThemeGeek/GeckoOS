@@ -76,6 +76,7 @@ typedef struct multiboot2_tag_mmap {
     uint32_t size;
     uint32_t entry_size;
     uint32_t entry_version;
+    struct multiboot2_mmap_entry entries[];
     /* Followed by (size - 16) / entry_size entries of type multiboot2_mmap_entry_t */
 } __attribute__((packed)) multiboot2_tag_mmap_t;
 

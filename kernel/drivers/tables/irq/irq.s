@@ -1,5 +1,6 @@
 ; kernel/drivers/tables/irq/irq.s
 bits 64
+extern irq_handler
 
 %macro IRQ 2
   [GLOBAL irq%1]
@@ -10,22 +11,22 @@ bits 64
     jmp irq_common_stub
 %endmacro
 
-IRQ   0,  32
-IRQ   1,  33
-IRQ   2,  34
-IRQ   3,  35
-IRQ   4,  36
-IRQ   5,  37
-IRQ   6,  38
-IRQ   7,  39
-IRQ   8,  40
-IRQ   9,  41
-IRQ  10,  42
-IRQ  11,  43
-IRQ  12,  44
-IRQ  13,  45
-IRQ  14,  46
-IRQ  15,  47
+section .data
+;stub vectors   
+%assign i 0
+%rep 223
+    IRQ i,i+32
+%assign i i+1
+%endrep
+
+[GLOBAL irq_stub_table]
+irq_stub_table:
+%assign i 0
+%rep 223
+    dq irq %+ i        
+%assign i i+1
+%endrep
+
 
 [EXTERN irq_handler]
 
@@ -64,7 +65,7 @@ IRQ  15,  47
     pop rbx
     pop rax
 %endmacro
-
+[GLOBAL irq_common_stub]
 irq_common_stub:
     pushaq
 

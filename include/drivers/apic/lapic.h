@@ -48,5 +48,5 @@ uint32_t lapic_get_id(void);
 void lapic_write(uint32_t reg, uint32_t value);
 uint32_t lapic_read(uint32_t reg);
 void lapic_timer_start(void);
-extern uint64_t lapic_timer_tick;
+extern volatile uint64_t lapic_timer_tick;
 void lapic_timer_handler(registers_t *regs) ;

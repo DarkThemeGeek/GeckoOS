@@ -22,13 +22,17 @@
 #include <terminal/terminal.h>
 #include <fs/fs.h>
 
+#define GECKO_VERSION "2.2"
+
 void process_input(unsigned char *buffer) {
     run_command(buffer, TERM_COLOR);
 }
 
 void kmain();
 
-extern struct multiboot2_tag_bootloader_name* bootloader_info;
+#ifdef DEBUG
+    extern struct multiboot2_tag_bootloader_name* bootloader_info;
+#endif
 
 // uint64_t global_table;
 
@@ -68,13 +72,14 @@ void _entry(uint64_t mbi) {
         asm volatile("sti"); // repoening interrupts
     } else {
         // idk should have apic not my problem
-    };
+    }
     //================= hardware init===================//
     printc("Enabling Timer ...\n", VGA_COLOR_LIGHT_GREY);
     lapic_timer_start();
     printc("Enabling hardware devices ...\n", VGA_COLOR_LIGHT_GREY);
     // basic stuff
     keyboard_install();
+    set_layout(LAYOUTS[0]);
     mouse_init();
     terminal_init();
     // pci init
@@ -87,9 +92,19 @@ void _entry(uint64_t mbi) {
     arp_init();
     drives_init();
 
+    terminal_clear(TERM_COLOR);
+
+    printf("GeckoOS Version %s\n", GECKO_VERSION);
+    #ifdef DEBUG
+        printf("Booted via %s/Multiboot2.\n", bootloader_info->string);
+    #else
+        printc("Booted via GRUB/Multiboot2.\n", TERM_COLOR);
+    #endif
+
     // shutdown();
 
     // global_table = (uint64_t)vmm_get_pml4();
+    printf("\n");
     kmain();
 }
 

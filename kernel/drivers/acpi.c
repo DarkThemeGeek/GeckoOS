@@ -168,7 +168,9 @@ static int parse_madt_entries(struct acpi_madt *madt)
 
     // Map LAPIC base
     acpi_lapic_base =madt->lapic_addr;
-    printf("LAPIC is at %p\n", acpi_lapic_base);
+    #ifdef DEBUG
+        printf("LAPIC is at %p\n", acpi_lapic_base);
+    #endif
 
     // Parse entries after the MADT header
     uint8_t *ptr = (uint8_t *)madt + sizeof(struct acpi_madt);
@@ -193,8 +195,10 @@ static int parse_madt_entries(struct acpi_madt *madt)
         case 1: { // IOAPIC
             struct madt_ioapic *io = (struct madt_ioapic *)ptr;
             acpi_ioapic_base       = io->addr;//mmio_map(io->addr, PAGE_SIZE);
-            printf("IOAPIC found: addr=%p, gsi_base=%u\n", acpi_ioapic_base,
-                   io->gsi_base);
+            #ifdef DEBUG
+                printf("IOAPIC found: addr=%p, gsi_base=%u\n", acpi_ioapic_base,
+                    io->gsi_base);
+            #endif
             found_ioapic = 1;
             break;
         }

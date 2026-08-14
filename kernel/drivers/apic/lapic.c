@@ -92,9 +92,9 @@ void lapic_timer_start(void)
     irq_install_handler(48, lapic_timer_handler, 0);
 }
 
-uint64_t lapic_timer_tick = 0;
+volatile uint64_t lapic_timer_tick = 0;
 // works finally
-void lapic_timer_handler(registers_t *regs) { lapic_timer_tick++; }
+void lapic_timer_handler(registers_t *_) { lapic_timer_tick++; }
 void cpu_set_apic_base(uint64_t apic)
 {
     uint64_t value;

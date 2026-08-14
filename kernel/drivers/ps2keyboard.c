@@ -72,7 +72,7 @@ scancode_t ps2_kb_wfi()
     // Ember2819: arrow key history
     if (scancode == 0xE0) {
         while (!(inb(KEYBOARD_STATUS_PORT) & 1)) {
-            asm volatile("pause");
+            asm volatile("hlt");
         }
         scancode_t ext = inb(KEYBOARD_DATA_PORT);
         if (ext & 0x80)
@@ -115,7 +115,6 @@ void set_layout(KeyboardLayout layout)
 
 void keyboard_handler(registers_t *r)
 {
-  
     // listen to the key port
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
 
@@ -124,7 +123,6 @@ void keyboard_handler(registers_t *r)
 
     last_scancode = scancode;
     kb_ready      = 1;
-
 }
 // installing the handler of the pic
 void keyboard_install()

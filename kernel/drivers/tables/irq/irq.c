@@ -61,7 +61,6 @@ void irq_install()
     for (int i = 32; i < 254; i++)
         {
             idt_set_gate(i, (uint64_t)irq_stub_table[i-32], 0x08, 0x8E);
-           
         }
     irq_routines_table[16]=(isr_t)lapic_timer_handler;
 
@@ -70,7 +69,7 @@ void irq_install()
 void irq_handler(registers_t *regs)
 {
 
-    int irq = regs->int_no - 32;;
+    int irq = regs->int_no - 32;
     if (irq_routines_table[irq])
         ((isr_t)(irq_routines_table[irq]))(regs);
     lapic_write(0xB0, 0);

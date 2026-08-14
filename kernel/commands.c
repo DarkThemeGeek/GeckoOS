@@ -1,3 +1,4 @@
+#include "drivers/apic/lapic.h"
 #include "exe.h"
 #include "process/process.h"
 #include "terminal/printf.h"
@@ -5,8 +6,8 @@
 #include <bootoptions.h>
 #include <colors.h>
 #include <drivers/keyboard.h>
-#include <drivers/tables/timer.h>
 #include <drivers/serial.h>
+#include <elf.h>
 #include <layouts/kb_layouts.h>
 #include <terminal/terminal.h>
 #include <gk/gk.h>
@@ -21,6 +22,8 @@
 #include <net/icmp.h>
 #include <net/arp.h>
 #include <drivers/e1000.h>
+
+extern uint32_t memsize_grub;
 
 // Command table
 static Command commands[] = {
@@ -56,17 +59,16 @@ static Command commands[] = {
     { "mkdir",        cmd_mkdir        },
     { "echo",         cmd_echo         },
     { "write",        cmd_write        },
-    { "dumpelf",      cmd_dumpelf      },
     { "runelf",       cmd_runelf       },
     // --- network ---
     { "ping",         cmd_ping         },
     // --- proccess ---
     { "processes",    cmd_processes    },
+    // --- ACPI ---
+    { "showrsdt",     cmd_showrsdt     },
 };
 
 static int num_commands = sizeof(commands) / sizeof(commands[0]);
-
-struct drive_fs_t *fs;
 
 static const char* help_lines[] = {
     "--- System ---",
@@ -106,11 +108,13 @@ static const char* help_lines[] = {
     "mkdir       - Create a new directory",
     "echo        - Print text to screen",
     "write       - Append text to an existing file",
-    "dumpelf     - Dumps an ELF file",
     "runelf      - Runs an ELF file",
     "",
     "--- Network ---",
     "ping <ip>   - Ping an IP address (e.g. ping 10.0.2.2)",
+    "",
+    "--- ACPI ---",
+    "showrsdt    - Show the entries of the ACPI (The qemu ACPI is very old)",
     "",
     0
 };
@@ -233,7 +237,7 @@ static void cmd_chars(uint8_t color) {
 
 static void cmd_sleep5(uint8_t color) {
     print("\nSleeping for 5 seconds...\n");
-    sleep(5);
+    // sleep(5);
     print("Done!\n");
 }
 
@@ -244,22 +248,16 @@ static void cmd_reboot(uint8_t color) {
 
 static void cmd_print_ticks(uint8_t color) {
     print("\nTick: ");
-    print_int(get_tick());
+    print_int(lapic_timer_tick);
     print("\n");
 }
 
 static void cmd_fsmount(uint8_t color) {
-    printc("\n", color);
-    if (!get_kdrive(1)) {
-        printc("No slave drive found. Is fat32.img attached as a second drive?\n", VGA_COLOR_RED);
-        return;
+    putchar('\n', color);
+    for (int i = 1; i < 6; i++) {
+        printf("Trying drive %d", i);
+        if (fsmount(i)) break;
     }
-    fs = fs_drive_open(get_kdrive(1));
-    if (fs == 0) {
-        printc("Filesystem mount failed. Is fat32.img a valid FAT32 image?\n", VGA_COLOR_RED);
-        return;
-    }
-    printc("Filesystem mounted successfully.\n", color);
 }
 
 static void cmd_ls(uint8_t color) {
@@ -537,7 +535,7 @@ static void cmd_write(uint8_t color) {
 }
 
 static void cmd_uptime(uint8_t color) {
-    uint32_t ticks = get_tick();
+    uint32_t ticks = lapic_timer_tick;
     uint32_t seconds = ticks / 50;
     uint32_t minutes = seconds / 60;
     uint32_t hours   = minutes / 60;
@@ -559,6 +557,7 @@ static void cmd_meminfo(uint8_t color) {
     printc("\nMemory:\n", color);
     printc("  Heap base : 0x200000\n", color);
     printc("  Heap end  : 0x500000 (3 MB window, hardcoded)\n", color);
+    printf( "  Memory size (This isn't exact, This will be less for around 42%%)  : %dMb\n", memsize_grub / 1048576);
     printc("  TODO: wire up Multiboot2 memory map (Phase 1)\n", color);
     printc("\n", color);
 }
@@ -680,11 +679,11 @@ static void cmd_ping(uint8_t color) {
 
     arp_request(target_ip);
 
-    int tick_start = get_tick();
+    int tick_start = lapic_timer_tick;
     int resolved = 0;
     uint8_t mac[6];
 
-    while (get_tick() - tick_start < 100) {
+    while (lapic_timer_tick - tick_start < 100) {
         process_rx_packets();
         if (arp_resolve(target_ip, mac)) {
             resolved = 1;
@@ -708,10 +707,10 @@ static void cmd_ping(uint8_t color) {
         icmp_send_echo_request(target_ip, ping_id, i);
         sent++;
 
-        int wait_start = get_tick();
+        int wait_start = lapic_timer_tick;
         int got_reply = 0;
 
-        while (get_tick() - wait_start < 100) {
+        while (lapic_timer_tick - wait_start < 100) {
             process_rx_packets();
             if (icmp_got_reply()) {
                 got_reply = 1;
@@ -738,7 +737,7 @@ static void cmd_ping(uint8_t color) {
             printc("Request timed out\n", VGA_COLOR_RED);
         }
 
-        timer_wait(50);
+        // timer_wait(50);
     }
 
     serial_puts("\n--- Ping Statistics ---\n");
@@ -759,19 +758,6 @@ static void cmd_ping(uint8_t color) {
     print_int(sent - received);
     printc("\n", color);
 }
-static void cmd_dumpelf(uint8_t color) {
-    unsigned char filename[32];
-
-    printf("\nEnter the filename: ");
-    input(filename, 32, color);
-
-    Buffer_t file = readfile(filename);
-
-    printf("\n");
-    dumpelf(file.bytes, file.size);
-
-    kfree(file.bytes);
-}
 
 static void cmd_runelf(uint8_t color) {
     unsigned char filename[32];
@@ -780,15 +766,28 @@ static void cmd_runelf(uint8_t color) {
     input(filename, 32, color);
 
     Buffer_t file = readfile(filename);
-
     printf("\n");
-    runelf(file);
+    if (!file.bytes) {
+        printf("That file dosen't exists!\n");
+        return;
+    }
+    elf_load_stage1((Elf64_Ehdr*)file.bytes);
+    elf_load_stage2((Elf64_Ehdr*)file.bytes);
 
     kfree(file.bytes);
 }
 
 static void cmd_processes(uint8_t color) {
     printf("\nProcesses count: %d\n", nr_processes);
+}
+
+static void cmd_showrsdt(uint8_t color) {
+    #ifndef DEBUG
+        printf("\nThis commands only shows output if this OS was compiled in DEBUG mode\n");
+    #else
+        printf("\n");
+    #endif
+    // Nothing...
 }
 
 static int streq(unsigned char *a, char *b) {

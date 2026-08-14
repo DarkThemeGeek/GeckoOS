@@ -95,18 +95,18 @@ multiboot2_entry:
     mov [magic], eax
     mov [mbi], ebx
 
-    mov edi, pml4_table
-    mov ecx, 4096
+    mov edi, pml4_table ; This zeroes all the tables
+    mov ecx, 5120
     xor eax, eax
     rep stosd
 
-    mov ebx, pml4_table
-    mov ecx, (4 * 4096) / 4
-    xor eax, eax
-.zero_tables:
-    mov [ebx], eax
-    add ebx, 4
-    loop .zero_tables
+;    mov ebx, pml4_table ; This block of code is USELESS
+;    mov ecx, (4 * 4096) / 4
+;    xor eax, eax
+;.zero_tables:
+;    mov [ebx], eax
+;    add ebx, 4
+;    loop .zero_tables
 
     mov eax, pdpt_table_lo
     or  eax, 0x3

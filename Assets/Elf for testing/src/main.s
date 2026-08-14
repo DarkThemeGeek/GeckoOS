@@ -1,6 +1,6 @@
 section .text
 _start:
-    mov rax, dihh
+    ; mov rax, [dih]
     ret
 section .data
-dihh: db 0xfa
+dih dq 0xBADDE

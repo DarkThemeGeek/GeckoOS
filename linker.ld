@@ -1,6 +1,5 @@
 OUTPUT_FORMAT(elf64-x86-64)
 ENTRY(multiboot2_entry)
-
 PHYS_BASE = 0x100000;
 VIRT_BASE = 0xFFFFFFFF80000000;
 
@@ -12,8 +11,10 @@ PHDRS
 
 SECTIONS
 {
-    . = PHYS_BASE;
+   
 
+    . = PHYS_BASE;
+    _kernel_start = .;
     .multiboot2_header : {
         KEEP(*(.multiboot2_header))
     } :text
@@ -46,4 +47,5 @@ SECTIONS
         *(COMMON)
         _bss_end = .;
     } :data
+    _kernel_end = .;
 }

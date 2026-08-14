@@ -49,4 +49,6 @@ void register_interrupt_handler(uint8_t n, isr_t handler);
 #define INT_VIRTEXC         0x14 // Virtualization Exception
 #define INT_CPE             0x15 // Control Protection Exception
 
+void ud_exception_handler(registers_t* regs);
+
 #endif

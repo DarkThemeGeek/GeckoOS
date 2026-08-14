@@ -32,12 +32,12 @@ A collaborative OS project where contributors build a custom operating system fr
 
 **Fedora:**
 ```bash
-sudo dnf install clang nasm binutils grub2-tools-extra xorriso qemu-system-x86  -y
+sudo dnf install clang nasm binutils grub2-tools-extra xorriso mtools qemu-system-x86 -y
 ```
 
 **Arch Linux:**
 ```bash
-sudo pacman -S clang nasm binutils grub xorriso qemu-system-x86 
+sudo pacman -S clang nasm binutils grub xorriso qemu-system-x86 mtools
 ```
 
 **Debian / Ubuntu / any APT-based distro:**
@@ -48,6 +48,8 @@ sudo apt install clang nasm binutils grub-common xorriso qemu-system-x86 mtools 
 ---
 
 ### Build and run
+
+Note: The DEBUG mode is activated by default
 
 **Step 1 — Create the FAT32 data disk:**
 ```bash
@@ -61,7 +63,7 @@ make
 
 **Step 3 — Run in QEMU:**
 ```bash
-qemu-system-i386 -cdrom gecko.iso -drive file=fat32.img,format=raw,if=ide,index=1 -boot order=d
+qemu-system-x86_64 -cdrom gecko.iso -drive file=fat32.img,format=raw,if=ide,index=1 -boot order=d
 ```
 
 Once booted, run `fsmount` in the GeckoOS shell to mount the FAT32 data disk, then use `help` to see available filesystem commands.
@@ -86,14 +88,14 @@ make clean
 | `fsmount` | Mount the FAT32 filesystem |
 | `fsinfo` | Print FAT32 volume info |
 | `ls` | List files on the mounted filesystem |
-| `touch <file>` | Create a new file |
-| `rm <file>` | Delete a file |
-| `cp <src> <dst>` | Copy a file |
-| `mv <src> <dst>` | Move/rename a file |
-| `mkdir <dir>` | Create a directory entry |
-| `write <file> <text>` | Append text to a file |
-| `cat <file>` | Print file contents |
-| `edit <file>` | Open the built-in text editor |
+| `touch` | Create a new file |
+| `rm` | Delete a file |
+| `cp` | Copy a file |
+| `mv` | Move/rename a file |
+| `mkdir` | Create a directory entry |
+| `write` | Append text to a file |
+| `cat` | Print file contents |
+| `edit` | Open the built-in text editor |
 
 ## How to Contribute
 
@@ -136,7 +138,7 @@ Add your name to the contributors list when you contribute!
 - **Ember2819** (Founder & Manager)
 - DarkThemeGeek
 - TheOtterMonarch
-- Pumpkicks or flixytss
+- Just Pumpkicks
 - nfoxers
 - Sifi11 (Founder)
 - Crim (OG)

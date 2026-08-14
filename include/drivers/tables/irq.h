@@ -3,7 +3,7 @@
 
 #include <drivers/tables/isr.h>
 
-extern void irq_install_handler(int irq, isr_t handler);
+void irq_install_handler(int irq, isr_t handler,int flags);
 extern void irq_install();
 
 #endif

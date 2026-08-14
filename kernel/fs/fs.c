@@ -1,7 +1,10 @@
+#include "drivers/vga.h"
 #include "mem.h"
 #include "terminal/terminal.h"
 #include <fs/fat32.h>
 #include <fs/fs.h>
+
+struct drive_fs_t *fs;
 
 struct drive_fs_t *fs_drive_open( struct kdrive_t *drive )
 {
@@ -32,7 +35,6 @@ void fs_free_entries( struct fs_entries_t *entries )
 	/* we do not have free lol, let that sink in */
 }
 
-extern struct drive_fs_t *fs;
 Buffer_t readfile(unsigned char* fname) {
     struct fs_entries_t entries;
     int i, found;
@@ -68,4 +70,19 @@ Buffer_t readfile(unsigned char* fname) {
         }
     }
     return (Buffer_t){buffer, entries.entries[found].file.file_size};
+}
+int fsmount(int drive) {
+    printc("\n", VGA_COLOR_WHITE);
+    struct kdrive_t* d;
+    if (!(d = get_kdrive(drive))) {
+        // printc("No slave drive found. Is fat32.img attached as a second drive?\n", VGA_COLOR_RED);
+        return 0;
+    }
+    fs = fs_drive_open(d);
+    if (fs == 0) {
+        printc("Filesystem mount failed. Is fat32.img a valid FAT32 image?\n", VGA_COLOR_RED);
+        return -1;
+    }
+    printc("Filesystem mounted successfully.\n\n", VGA_COLOR_WHITE);
+    return 1;
 }

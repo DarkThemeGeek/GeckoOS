@@ -1,7 +1,7 @@
 # Makefile to make and run with QEMU. //ember2819
 CC      = clang
 AS      = nasm
-LD      = ld # *should* support all arch on any arch (x86 on arm, x86_64 on arm, etc)
+LD      = ld
 OBJCOPY = objcopy
 
 include_folder = include
@@ -9,7 +9,7 @@ CC_FLAGS = -target x86_64-elf -march=x86-64 -m64 -MMD -MP \
            -ffreestanding -nostdlib -fno-builtin -fno-stack-protector \
            -mno-red-zone -mcmodel=kernel \
            -mno-sse -mno-sse2 -mno-avx \
-           -g -c $(addprefix -I,$(include_folder))
+           -g -c $(addprefix -I,$(include_folder)) -DDEBUG
 LD_FLAGS = -m elf_x86_64
 
 SOURCES := $(shell find ./kernel -name "*.c" -o -name "*.s")
@@ -66,12 +66,20 @@ Elffile:
 
 run-fat32: gecko.iso fat32.img # I dont want to make a new .img
 	qemu-system-x86_64 \
-	  -cdrom gecko.iso \
+	  -cdrom gecko.iso -m 1G \
 	  -drive format=raw,file=fat32.img \
 	  -boot order=d \
 	  -netdev user,id=net0 \
-	  -device e1000,netdev=net0 \
-	  -monitor stdio # -d int,pcall
+	  -device e1000,netdev=net0 -machine acpi=on \
+	  -monitor stdio # -M hpet=on -machine q35 # -smp 4 # -d int,pcall
+
+VBOXCreateMachine:
+	VBoxManage createvm --name "GECKOOS" --ostype "Other_64" --register
+	VBoxManage storagectl "GECKOOS" --name "IDE Controller" --add ide
+run-virtualbox: # You have to create the machine first, then you can run geckos in virtualbox
+	VBoxManage storageattach "GECKOOS" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium gecko.iso
+	VBoxManage startvm "GECKOOS"
+
 clean:
 	rm -f $(OBJECTS) $(DEPS)
 	rm -f kernel.elf gecko.iso

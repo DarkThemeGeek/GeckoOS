@@ -354,38 +354,6 @@ void input(unsigned char *buff, size_t buffer_size, uint8_t color)
     history_push(buff);
 }
 
-void print_hex(uint32_t n)
-{
-    int32_t tmp;
-
-    print("0x");
-
-    char noZeroes = 1;
-
-    int i;
-    for (i = 28; i > 0; i -= 4) {
-        tmp = (n >> i) & 0xF;
-        if (tmp == 0 && noZeroes != 0) {
-            continue;
-        }
-
-        if (tmp >= 0xA) {
-            noZeroes = 0;
-            putchar(tmp - 0xA + 'a', VGA_COLOR_WHITE);
-        } else {
-            noZeroes = 0;
-            putchar(tmp + '0', VGA_COLOR_WHITE);
-        }
-    }
-
-    tmp = n & 0xF;
-    if (tmp >= 0xA) {
-        putchar(tmp - 0xA + 'a', VGA_COLOR_WHITE);
-    } else {
-        putchar(tmp + '0', VGA_COLOR_WHITE);
-    }
-}
-
 void terminal_init()
 {
     fb_cols = g_fb_width / FONT_WIDTH;

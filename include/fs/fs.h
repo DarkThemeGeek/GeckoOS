@@ -87,5 +87,8 @@ struct drive_fs_t *fs_partition_open( struct kdrive_t *drive, struct partition_t
 void fs_free_entries( struct fs_entries_t *entries );
 
 Buffer_t readfile(unsigned char* fname);
+int fsmount(int drive);
+
+extern struct drive_fs_t *fs;
 
 #endif

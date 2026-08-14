@@ -58,9 +58,40 @@ static page_table_t *new_address_space(void)
     return pml4;
 }
 
-uint32_t create_process(void *entry_point)
+uint32_t create_process(void *entry_point, uint64_t entry_to, void *data_point, uint64_t data_to)
 {
     page_table_t *pml4 = new_address_space();
+
+    // Map the memory
+    for (uint64_t phys = 0; phys < 0x1000000; phys += PAGE_SIZE) {
+        if (!vmm_map(pml4, phys, phys, PTE_PRESENT | PTE_WRITABLE))
+            return false;
+    }
+
+    extern uint64_t g_fb_addr;
+    extern uint32_t g_fb_height;
+    extern uint32_t g_fb_pitch;
+    if (g_fb_addr) {
+        uint64_t fb_phys_start = g_fb_addr & ~((uint64_t)PAGE_SIZE - 1);
+        uint64_t fb_size       = (uint64_t)g_fb_height * g_fb_pitch;
+        uint64_t fb_pages      = (fb_size + PAGE_SIZE - 1) / PAGE_SIZE + 1;
+        for (uint64_t i = 0; i < fb_pages; i++) {
+            uint64_t p = fb_phys_start + i * PAGE_SIZE;
+            if (!vmm_map(pml4, p, p,
+                         PTE_PRESENT | PTE_WRITABLE | PTE_CACHE_DISABLE))
+                return false;
+        }
+    }
+
+    // The process
+    for (uint64_t phys = 0; phys < 0x1000; phys += PAGE_SIZE) {
+        if (!vmm_map(pml4, (uint64_t)entry_point + phys, entry_to + phys, PTE_PRESENT | PTE_WRITABLE))
+            return false;
+    }
+    for (uint64_t phys = 0; phys < 0x1000; phys += PAGE_SIZE) {
+        if (!vmm_map(pml4, (uint64_t)data_point + phys, data_to + phys, PTE_PRESENT | PTE_WRITABLE))
+            return false;
+    }
 
     Process *proc      = kmalloc(sizeof(Process));
     proc->id           = ++nextid;
@@ -104,6 +135,8 @@ static void execute_process(Process *proc)
     uint64_t proc_stack  = proc->threads[0].regs.rsp;
     vmm_set_pml4(proc->pml4);
 
+    printf("%x %p 0x%x\n", *(uint8_t*)(entry_point), entry_point, proc_stack);
+    
     __asm__ __volatile__(
         "cli\n"
         "pushq $0x10\n"         /* SS */

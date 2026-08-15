@@ -2,7 +2,10 @@
 
 #include "drivers/tables/isr.h"
 #include <stdint.h>
-
+//Advanced Configuration and Power Interface (acpi)
+//the stuff which holds stuff to other stuff 
+//power settings (shutdown sleep) and 
+//the table which has the lapic and ioapic adress
 struct acpi_rsdp_v1 {
     char signature[8];
     uint8_t checksum;
@@ -123,7 +126,13 @@ typedef struct {
 
 extern uintptr_t acpi_lapic_base;
 extern uintptr_t acpi_ioapic_base;
+//Opens the tables of the acpi and stores the data
 int acpi_init();
 
+//TODO: add it
+//not implemented from what it looks like should search gsis and map them to irqs
 void acpi_irq_handler(registers_t* regs);
+
+//TODO:actually make it work
+//function to shutdown the system 
 int shutdown();

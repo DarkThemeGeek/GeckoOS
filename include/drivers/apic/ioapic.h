@@ -1,4 +1,4 @@
-// Advanced programamble interrupt card or smth
+// Advanced programamble interrupt controller or smth
 // the thing we use for input and output and we have the io one and the local
 // one the local is for interacting between cores i think
 #pragma once

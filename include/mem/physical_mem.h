@@ -18,5 +18,5 @@ void deinitialize_memory_region(uint64_t base_address, uint64_t size);
 //initializes the mem by using mmap from mbi
 void initialize_memory_manager_from_mbi(uint64_t mbi_addr);
 
-//finds the first free blocks for allocation 
+//finds the first free blocks for allocation sda
 int32_t find_first_free_blocks(uint32_t num_blocks);

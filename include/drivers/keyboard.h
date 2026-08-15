@@ -54,6 +54,7 @@ scancode_t ps2_kb_wfi();
 void set_layout(KeyboardLayout layout);
 //installs the handler on it s port on pic so we get interupts each time a key is pressed
 void keyboard_install();
+//The handler installed for the keyboard (called by the irq for keyboara redirected trough ioapic to lapic)
 void keyboard_handler(registers_t* r);
 
 

@@ -4,7 +4,6 @@
 #include "drivers/vga.h"
 #include "mem/paging.h"
 #include "ports.h"
-#include "string.h"
 #include "terminal/terminal.h"
 #include <stddef.h>
 #include <stdint.h>

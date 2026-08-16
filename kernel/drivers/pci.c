@@ -4,9 +4,13 @@
 #include <mem.h>
 #include <ports.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define PCI_CFG_ADDR 0xCF8
 #define PCI_CFG_DATA 0xCFC
+
+#define PCI_GET_16BIT(number32bit) ((number32bit>> (((off & 2) * 8) )) & 0xffff)
+#define PCI_GET_8BIT(number32bit)  ((number32bit >> ((off & 3) * 8 )) & 0xff);
 
 #define PCI_DEV(devfn) ((devfn) >> 3)
 #define PCI_FN(devfn)  ((devfn) & 7)
@@ -22,14 +26,13 @@ uint32_t pci_readl(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off) {
 }
 
 uint16_t pci_readw(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off) {
-    uint32_t addr = (bus << 16) | (slot << 11) | (func << 8) | (off & 0xFC) | 0x80000000;
-    outl(PCI_CFG_ADDR, addr);
-    return (uint16_t)((inl(PCI_CFG_DATA) >> ((off & 2) * 8)) & 0xffff);
+    uint32_t addr = pci_readl(bus, slot,  func,  off);
+    return (uint16_t) PCI_GET_16BIT(addr);
 }
 
 uint8_t pci_readb(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off) {
-    uint32_t v = pci_readl(bus, slot, func, off & ~3);
-    return (v >> ((off & 3) * 8)) & 0xff;
+    uint32_t addr= pci_readl(bus, slot, func, off & ~3);
+    return (uint8_t)PCI_GET_8BIT(addr);
 }
 
 void pci_writel(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off, uint32_t data) {
@@ -190,7 +193,7 @@ void enumerate_pcibus(struct pci_bus *bus) {
     }
 }
 
-void enumerate_pci() {
+void pci_enumarate() {
     pci_root_bus.bus         = 0;
     pci_root_bus.primary     = 0;
     pci_root_bus.children    = NULL;

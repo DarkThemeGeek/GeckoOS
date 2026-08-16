@@ -84,7 +84,7 @@ void _entry(uint64_t mbi) {
     mouse_init();
     terminal_init();
     // pci init
-    enumerate_pci();
+    pci_enumarate();
     pci_detect_nics();
 
     // network init//

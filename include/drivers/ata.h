@@ -43,12 +43,14 @@
 #define ATA_DRIVE_MASTER    0
 #define ATA_DRIVE_SLAVE     1
 
-// Initialize ATA
+//TODO: make it work with any number of drives
+// Initialize ATA (only works with 1 drive)
 int ata_init(void);
-
+// Checks if there is a drive
 int ata_drive_present(int drive);
-
+// reads sectors of a drive
 int ata_read_sectors(int drive, uint32_t lba, uint8_t count, uint8_t *buf);
+// writes sectors to a drive
 int ata_write_sectors(int drive, uint32_t lba, uint8_t count, const uint8_t *buf);
 
 #endif // ATA_H

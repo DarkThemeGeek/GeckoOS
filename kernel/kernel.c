@@ -46,6 +46,7 @@ void _entry(uint64_t mbi) {
         for (;;)
             asm volatile("hlt");
     }
+    
     outb(0x22, 0x70);
     outb(0x23, 0x01);
 
@@ -83,7 +84,7 @@ void _entry(uint64_t mbi) {
     mouse_init();
     terminal_init();
     // pci init
-    enumerate_pci();
+    pci_enumarate();
     pci_detect_nics();
 
     // network init//

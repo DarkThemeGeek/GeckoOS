@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 
-
-
 struct usb_controller {
     struct pci_common_hdr pci;
 

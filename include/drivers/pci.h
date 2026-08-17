@@ -2,7 +2,7 @@
 #define PCI_H
 
 #include <stdint.h>
-
+// a bus
 struct pci_bus {
     struct pci_bus *parent;
     struct pci_bus *children;
@@ -18,6 +18,7 @@ struct pci_bus {
     uint8_t secondary;
     uint8_t subordinate;
 };
+typedef struct pci_bus pci_bus_t ;
 
 struct pci_dev {
     struct pci_bus *bus;
@@ -34,6 +35,7 @@ struct pci_dev {
 
     uint8_t irq;
 };
+typedef struct pci_dev pci_dev_t;
 
 struct pci_common_hdr {
     uint16_t vendid;
@@ -50,6 +52,8 @@ struct pci_common_hdr {
     uint8_t  bist;
 } __attribute__((packed));
 
+typedef struct pci_common_hdr pci_common_hdr_t;
+
 struct pci_hdr_dev {
     uint32_t bar[6];
     uint32_t cardptr;
@@ -63,6 +67,8 @@ struct pci_hdr_dev {
     uint8_t  mingrant;
     uint8_t  maxlat;
 } __attribute__((packed));
+
+typedef struct pci_hdr_dev pci_hdr_dev_t;
 
 struct pci_hdr_brd {
     uint32_t bar[2];
@@ -88,6 +94,7 @@ struct pci_hdr_brd {
     uint8_t  ipin;
     uint16_t bctrl;
 } __attribute__((packed));
+typedef struct pci_hdr_brc pci_hdr_brd_t;
 
 struct pci_hdr_crd {
     uint32_t cardbus_addr;
@@ -111,6 +118,8 @@ struct pci_hdr_crd {
     uint16_t bctrl;
 } __attribute__((packed));
 
+typedef struct pci_hdr_crd pci_hdr_crd_t;
+
 struct pci_hdr {
     struct pci_common_hdr common;
     union {
@@ -119,18 +128,27 @@ struct pci_hdr {
         struct pci_hdr_crd card_bridge;
     };
 } __attribute__((packed));
+typedef struct pci_hdr pci_hdr_t ;
 
+
+//reads double word or a uint32 from a certain bus and slot and function with a register offset 
 uint32_t pci_readl(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off);
+//reads from a certain bus and slot and function a word or uint16 with  with a register offset 
 uint16_t pci_readw(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off);
+//reads from a certain bus and slot and function with a  with a register offset 
 uint8_t  pci_readb(uint32_t bus, uint32_t slot, uint32_t func, uint8_t off);
+//write a 32bit  number to a bus with a register offset based on the pci bus,slot,function and the register offset
 void     pci_writel(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off, uint32_t data);
+//write a 16bit  number to a bus with a register offset based on the pci bus,slot,function and the register offset
 void     pci_writew(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off, uint16_t data);
+//write a 8bit  number to a bus with a register offset based on the pci bus,slot,function and the register offset
 void     pci_writeb(uint32_t bus, uint32_t slot, uint32_t func, uint32_t off, uint8_t data);
 
-uint8_t enumerate_pcidev(struct pci_bus *parent, uint8_t dev, uint8_t func);
-void    enumerate_pcibus(struct pci_bus *bus);
-void    enumerate_pci();
-
+uint8_t enumerate_pcidev( pci_bus_t *parent, uint8_t dev, uint8_t func);
+void    enumerate_pcibus(pci_bus_t *bus);
+//finding out new stuff added to the pci
+void    pci_enumarate();
+//checkout and print busses info
 void pci_lspci();
 void pci_detect_nics();
 

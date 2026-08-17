@@ -14,6 +14,7 @@
 
 int g_mouse_x_pos = 0, g_mouse_y_pos = 0;
 MOUSE_STATUS g_status;
+mouse_event_callback mouse_event_run = 0;
 
 int mouse_getx() { return g_mouse_x_pos; }
 
@@ -38,7 +39,13 @@ void mouse_wait(bool type)
         }
     }
 }
-
+//reads mouse data from the port and awaits it
+uint8_t mouse_read()
+{
+    mouse_wait(false);
+    return inb(MOUSE_DATA_PORT);
+}
+//write mouse data to the port and awaits
 uint8_t mouse_write(uint8_t data)
 {
     // sending write command
@@ -55,11 +62,7 @@ uint8_t mouse_write(uint8_t data)
     return ack;
 }
 
-uint8_t mouse_read()
-{
-    mouse_wait(false);
-    return inb(MOUSE_DATA_PORT);
-}
+
 
 void get_mouse_status(char status_byte, MOUSE_STATUS *status)
 {
@@ -98,6 +101,7 @@ void print_mouse_info()
 }
 static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
+
 void mouse_handler(registers_t *r)
 {
     static uint8_t mouse_cycle = 0;
@@ -298,6 +302,7 @@ void mouse_init()
 void register_mouse_callback(mouse_event_callback callback)
 { mouse_event_run = callback; }
 
+//fakes mouse event handler call for testing
 void simulate_mouse_event(mouse_event_data_t md)
 {
     if (mouse_event_run != NULL) {

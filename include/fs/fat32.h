@@ -6,6 +6,7 @@
 #include <partition/partition.h>
 #include <drivers/drives.h>
 #include <fs/fs.h>
+//fat 32 files system implementation
 
 struct drive_fs_t *fat32_drive_open( struct kdrive_t *drive, struct partition_t *partition );
 struct drive_fs_t *fat32_drive_close( struct drive_fs_t *fs );

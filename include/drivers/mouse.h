@@ -16,11 +16,10 @@
 #define MOUSE_CMD_RESOLUTION               0xE8
 #define MOUSE_CMD_CMD                      0xD4 //COmmand to ask for writing command response is 0XFA acknowledge byte
 
-#define MOUSE_ACKNOWLEDGE 0xFA
+#define MOUSE_ACKNOWLEDGE 0xFA //not properly used on osdev wiki should be read after each command
 
 #define PS2_CMD_PORT 0x64 // read/write PS/2 command register
-#define MOUSE_DATA_PORT                                                        \
-    0x60 // PS/2 data port register see
+#define MOUSE_DATA_PORT  0x60 // PS/2 data port register see
          // https://wiki.osdev.org/%228042%22_PS/2_Controller
 
 typedef struct {
@@ -33,10 +32,9 @@ typedef struct {
     uint8_t x_overflow : 1;
     uint8_t y_overflow : 1;
 } MOUSE_STATUS;
-
-void mouse_init();
-
+//get mouse x
 int mouse_getx();
+//get mouse y
 int mouse_gety();
 
 typedef struct {
@@ -46,7 +44,7 @@ typedef struct {
     uint8_t event_type; // 0=move, 1=button, 2=scroll
 } mouse_event_data_t;
 
-// intializes the mouse
+// intializes the mouse sends the commands to the command ps2 port and all that stuff
 void mouse_init();
 // the handler to be attached at irq 12
 void mouse_handler(registers_t *r);
@@ -59,9 +57,7 @@ void register_mouse_callback(mouse_event_callback callback);
 // Function that will trigger the callback
 void simulate_mouse_event(mouse_event_data_t md);
 
-static mouse_event_callback mouse_event_run = 0;
 
 void set_mouse_rate(uint8_t rate);
 
-uint8_t mouse_read();
 #endif
